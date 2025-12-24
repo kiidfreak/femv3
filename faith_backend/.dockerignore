@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+
+# Testing
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Backups
+backups/
+*.dump
+schema_dump.json
+product_schema.json
+user_schema.json
+test_db.py
+db_analysis.py
+list_tables.py
+dump_user_schema.py
+dump_product_schema.py

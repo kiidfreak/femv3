@@ -1,0 +1,88 @@
+services:
+  # PostgreSQL Database (using Railway)
+  # Note: Using external Railway database, no local postgres service needed
+
+  # Django Backend
+  backend:
+    build:
+      context: ./faith_backend
+      dockerfile: Dockerfile
+    container_name: faithconnect_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:EQnOgRPMvZTtyDhlUHOcgpNSsVXwYOtR@centerbeam.proxy.rlwy.net:22007/railway
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-please-change-in-production}
+      - ALLOWED_HOSTS=*
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - SMS_API_KEY=${SMS_API_KEY}
+      - SMS_FROM_NUMBER=${SMS_FROM_NUMBER:-Swiftt_OTP}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME:-af-south-1}
+      - USE_S3=${USE_S3:-False}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+    volumes:
+      - ./faith_backend/media:/app/media
+      - ./faith_backend/static:/app/static
+    networks:
+      - faithconnect_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v3/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: faithconnect_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v3
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - faithconnect_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: faithconnect_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - faithconnect_network
+    restart: unless-stopped
+
+networks:
+  faithconnect_network:
+    driver: bridge
+
+volumes:
+  static_volume:
+  media_volume:
