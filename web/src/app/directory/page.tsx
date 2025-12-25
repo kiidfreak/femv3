@@ -13,49 +13,30 @@ export default function DirectoryPage() {
     const [businesses, setBusinesses] = useState<any[]>([])
 
     useEffect(() => {
-        // Simulate API call using our new domain-driven structure
         const fetchBusinesses = async () => {
             setLoading(true)
             try {
-                // In a real v3 app, this would be:
-                // const response = await apiClient.businesses.list('verified=true')
-                // const data = await response.json()
+                const response = await fetch('http://localhost:8000/api/v3/businesses/')
+                if (!response.ok) throw new Error('Failed to fetch')
+                const data = await response.json()
 
-                // Mocking the result for the redesign demo
-                setTimeout(() => {
-                    setBusinesses([
-                        {
-                            id: 1,
-                            name: "Kitisons Auto Spares",
-                            category: "Transportation",
-                            location: "Wangige, Nairobi",
-                            rating: 4.8,
-                            reviews: 124,
-                            verified: true,
-                        },
-                        {
-                            id: 2,
-                            name: "Neema Catering Services",
-                            category: "Events & Catering",
-                            location: "Kileleshwa, Nairobi",
-                            rating: 4.5,
-                            reviews: 56,
-                            verified: true,
-                        },
-                        {
-                            id: 3,
-                            name: "Faithful Graphics",
-                            category: "IT & Design",
-                            location: "Thika",
-                            rating: 4.2,
-                            reviews: 32,
-                            verified: false,
-                        }
-                    ])
-                    setLoading(false)
-                }, 1200) // Deliberate delay to show off next-gen skeletons
+                // Map backend data to frontend props
+                const mappedData = data.map((biz: any) => ({
+                    id: biz.id,
+                    name: biz.business_name,
+                    category: biz.category_name || 'Business',
+                    location: biz.address,
+                    rating: parseFloat(biz.rating) || 0,
+                    reviews: biz.review_count || 0,
+                    verified: biz.is_verified || false,
+                    productCount: biz.products?.length || 0,
+                    serviceCount: biz.services?.length || 0
+                }))
+
+                setBusinesses(mappedData)
             } catch (error) {
                 console.error("Failed to fetch businesses", error)
+            } finally {
                 setLoading(false)
             }
         }
