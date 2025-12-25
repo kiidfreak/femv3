@@ -23,6 +23,17 @@ export function UserProfileDropdown() {
 
     if (!user) return null
 
+    // Helper function to get display label for user type
+    const getUserTypeLabel = (userType: string) => {
+        const labels: Record<string, string> = {
+            'member': 'Community Member',
+            'business_owner': 'Business Owner',
+            'church_admin': 'Church Admin',
+            'system_admin': 'System Admin'
+        }
+        return labels[userType] || 'Member'
+    }
+
     // Calculate profile completion
     const getProfileCompletion = () => {
         let completed = 0
@@ -64,8 +75,8 @@ export function UserProfileDropdown() {
                         <span className="text-sm font-bold text-[#1A1A1A]">
                             {user.first_name || "User"}
                         </span>
-                        <span className="text-xs text-gray-500 capitalize">
-                            {user.user_type.replace('_', ' ')}
+                        <span className="text-xs text-gray-500">
+                            {getUserTypeLabel(user.user_type)}
                         </span>
                     </div>
                 </Button>
@@ -80,7 +91,7 @@ export function UserProfileDropdown() {
                         </div>
                         <div className="flex-1">
                             <p className="font-bold text-[#1A1A1A]">{user.first_name || user.phone}</p>
-                            <p className="text-sm text-gray-500 capitalize">{user.user_type.replace('_', ' ')}</p>
+                            <p className="text-sm text-gray-500">{getUserTypeLabel(user.user_type)}</p>
                         </div>
                     </div>
 
