@@ -46,7 +46,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'user_auth_user'
-        managed = False # Since the table already exists
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -55,7 +54,6 @@ class Category(models.Model):
 
     class Meta:
         db_table = 'business_category'
-        managed = False
 
 class Business(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -73,7 +71,6 @@ class Business(models.Model):
 
     class Meta:
         db_table = 'business_business'
-        managed = False
 
 class Service(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='services')
@@ -87,7 +84,6 @@ class Service(models.Model):
 
     class Meta:
         db_table = 'business_service'
-        managed = False
 
 class Product(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='products')
@@ -102,7 +98,6 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'business_product'
-        managed = False
 
 class Review(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reviews')
