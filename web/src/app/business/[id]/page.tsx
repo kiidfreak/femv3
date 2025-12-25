@@ -11,6 +11,7 @@ import {
     Package, Wrench, MessageSquare, Phone, Mail
 } from "lucide-react"
 import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
 
 interface Business {
     id: string
@@ -50,22 +51,30 @@ export default function BusinessDetailPage() {
     const [isFavorite, setIsFavorite] = useState(false)
 
     useEffect(() => {
-        fetchBusiness()
-    }, [params.id])
+        const fetchBusiness = async () => {
+            try {
+                const res = await apiClient.businesses.get(params.id as string)
+                if (res.ok) {
+                    const data = await res.json()
+                    setBusiness(data)
 
-    const fetchBusiness = async () => {
-        try {
-            const response = await fetch(`http://localhost:8000/api/v3/businesses/${params.id}/`)
-            if (!response.ok) throw new Error("Failed to fetch business")
-            const data = await response.json()
-            setBusiness(data)
-        } catch (error) {
-            toast.error("Failed to load business details")
-            console.error(error)
-        } finally {
-            setLoading(false)
+                    // Increment view count
+                    apiClient.businesses.incrementView(params.id as string).catch(console.error)
+                } else {
+                    toast.error("Business not found")
+                }
+            } catch (error) {
+                console.error("Failed to fetch business:", error)
+                toast.error("An error occurred")
+            } finally {
+                setLoading(false)
+            }
         }
-    }
+
+        if (params.id) {
+            fetchBusiness()
+        }
+    }, [params.id])
 
     const handleShare = () => {
         const url = window.location.href

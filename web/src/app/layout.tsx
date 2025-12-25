@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "sonner";
 
@@ -32,7 +34,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Navbar />
-          <main className="pt-16">{children}</main>
+          <main className="pt-16 min-h-screen">{children}</main>
+          <Footer />
+          <ScrollToTop />
           <Toaster position="top-center" richColors />
         </AuthProvider>
       </body>

@@ -44,6 +44,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'phone'
     REQUIRED_FIELDS = []
 
+    @property
+    def has_business_profile(self):
+        return self.businesses.exists()
+
     class Meta:
         db_table = 'user_auth_user'
 
@@ -61,11 +65,15 @@ class Business(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='businesses')
     business_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
     address = models.TextField()
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.IntegerField(default=0)
+    # view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -102,8 +110,8 @@ class Product(models.Model):
 class Review(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
+    # product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
+    # service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
     rating = models.IntegerField()
     review_text = models.TextField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
@@ -112,6 +120,17 @@ class Review(models.Model):
     class Meta:
         db_table = 'business_review'
 
+
+class PendingUser(models.Model):
+    phone = models.CharField(max_length=20, unique=True)
+    email = models.EmailField()
+    first_name = models.CharField(max_length=150, blank=True, null=True)
+    partnership_number = models.CharField(max_length=50, blank=True, null=True)
+    otp = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_pending_user'
 
 # Import Role and UserRole models for Django to discover them
 from .roles import Role, UserRole

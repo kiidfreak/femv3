@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth"
 
 export default function SignupPage() {
     const router = useRouter()
-    const { signup, isLoading } = useAuth()
+    const { signup, loading } = useAuth()
     const [formData, setFormData] = useState({
         first_name: "",
         email: "",
@@ -78,7 +78,7 @@ export default function SignupPage() {
                                 value={formData.first_name}
                                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                                 className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={isLoading}
+                                disabled={loading}
                             />
                         </div>
 
@@ -90,7 +90,7 @@ export default function SignupPage() {
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={isLoading}
+                                disabled={loading}
                             />
                         </div>
 
@@ -102,7 +102,7 @@ export default function SignupPage() {
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={isLoading}
+                                disabled={loading}
                             />
                         </div>
 
@@ -113,16 +113,16 @@ export default function SignupPage() {
                                 value={formData.partnership_number}
                                 onChange={(e) => setFormData({ ...formData, partnership_number: e.target.value })}
                                 className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={isLoading}
+                                disabled={loading}
                             />
                         </div>
 
                         <Button
                             type="submit"
                             className="w-full h-14 text-lg font-bold bg-[#F58220] hover:bg-[#D66D18] text-white rounded-xl shadow-lg shadow-[#F58220]/20 transition-all hover:scale-[1.02] active:scale-[0.98] mt-4 md:col-span-2 btn-press"
-                            disabled={isLoading}
+                            disabled={loading}
                         >
-                            {isLoading ? (
+                            {loading ? (
                                 <div className="flex items-center gap-2">
                                     <Loader2 className="h-5 w-5 animate-spin" />
                                     <span>Creating Account</span>

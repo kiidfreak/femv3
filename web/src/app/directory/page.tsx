@@ -3,22 +3,33 @@
 import { useState, useEffect } from "react"
 import { BusinessCard } from "@/components/directory/BusinessCard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { apiClient } from "@/lib/api-client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, Filter } from "lucide-react"
-import { apiClient } from "@/lib/api-client"
 
-export default function DirectoryPage() {
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
+import { Loader2 } from "lucide-react"
+
+function DirectoryContent() {
+    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(true)
     const [businesses, setBusinesses] = useState<any[]>([])
+    const [searchQuery, setSearchQuery] = useState("")
+    const [selectedCategory, setSelectedCategory] = useState("All")
+    const [categories, setCategories] = useState<{ id: number, name: string }[]>([])
+    const [showFilters, setShowFilters] = useState(false)
+    const [verifiedOnly, setVerifiedOnly] = useState(false)
+    const [highRatingsOnly, setHighRatingsOnly] = useState(false)
 
     useEffect(() => {
         const fetchBusinesses = async () => {
             setLoading(true)
             try {
-                const response = await fetch('http://localhost:8000/api/v3/businesses/')
-                if (!response.ok) throw new Error('Failed to fetch')
-                const data = await response.json()
+                const res = await apiClient.businesses.list('')
+                if (!res.ok) throw new Error('Failed to fetch')
+                const data = await res.json()
 
                 // Map backend data to frontend props
                 const mappedData = data.map((biz: any) => ({
@@ -29,8 +40,8 @@ export default function DirectoryPage() {
                     rating: parseFloat(biz.rating) || 0,
                     reviews: biz.review_count || 0,
                     verified: biz.is_verified || false,
-                    productCount: biz.products?.length || 0,
-                    serviceCount: biz.services?.length || 0
+                    productCount: biz.product_count || 0,
+                    serviceCount: biz.service_count || 0
                 }))
 
                 setBusinesses(mappedData)
@@ -40,8 +51,44 @@ export default function DirectoryPage() {
                 setLoading(false)
             }
         }
+
+        const fetchCategories = async () => {
+            try {
+                const res = await apiClient.categories.list()
+                if (res.ok) {
+                    const data = await res.json()
+                    setCategories(data)
+
+                    // Handle URL param after categories are loaded
+                    const paramId = searchParams.get('category')
+                    if (paramId) {
+                        const numericId = parseInt(paramId)
+                        const found = data.find((c: any) => c.id === numericId)
+                        if (found) {
+                            setSelectedCategory(found.name)
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch categories", error)
+            }
+        }
+
         fetchBusinesses()
+        fetchCategories()
     }, [])
+
+    const filteredBusinesses = businesses.filter(biz => {
+        const matchesSearch = biz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            biz.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            biz.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+        const matchesCategory = selectedCategory === "All" || biz.category === selectedCategory
+        const matchesVerified = !verifiedOnly || biz.verified
+        const matchesRating = !highRatingsOnly || biz.rating >= 4.0
+
+        return matchesSearch && matchesCategory && matchesVerified && matchesRating
+    })
 
     return (
         <div className="container py-12">
@@ -51,25 +98,83 @@ export default function DirectoryPage() {
                     <p className="text-gray-500 mt-2">Find and support trusted businesses in our community.</p>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80">
+                <div className="flex items-center gap-2 w-full md:w-auto md:flex-1 md:justify-end">
+                    <div className="relative flex-1 md:max-w-xl w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input className="pl-10" placeholder="Search businesses..." />
+                        <Input
+                            className="pl-10 w-full"
+                            placeholder="Search businesses..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                    <Button variant="outline" className="gap-2">
-                        <Filter className="h-4 w-4" /> Filters
-                    </Button>
                 </div>
+                <Button
+                    variant={showFilters || verifiedOnly || highRatingsOnly ? "secondary" : "outline"}
+                    className="gap-2"
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    <Filter className="h-4 w-4" /> Filters
+                </Button>
             </div>
 
-            <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-                {["All", "Transportation", "Events", "IT & Design", "Home", "Health", "Construction"].map((cat) => (
+
+            {/* Advanced Filters Panel */}
+            {
+                showFilters && (
+                    <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-wrap gap-6 animate-fade-in-bottom">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="verified"
+                                checked={verifiedOnly}
+                                onChange={(e) => setVerifiedOnly(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-[#F58220] focus:ring-[#F58220]"
+                            />
+                            <label htmlFor="verified" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                                Church Verified Only
+                            </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="rating"
+                                checked={highRatingsOnly}
+                                onChange={(e) => setHighRatingsOnly(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-[#F58220] focus:ring-[#F58220]"
+                            />
+                            <label htmlFor="rating" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                                High Ratings (4.0+)
+                            </label>
+                        </div>
+                        {(verifiedOnly || highRatingsOnly) && (
+                            <button
+                                onClick={() => { setVerifiedOnly(false); setHighRatingsOnly(false) }}
+                                className="text-sm text-[#F58220] hover:underline font-bold ml-auto"
+                            >
+                                Reset
+                            </button>
+                        )}
+                    </div>
+                )
+            }
+
+            <div className="flex gap-4 mb-8 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible scrollbar-hide">
+                <Button
+                    variant={selectedCategory === "All" ? "default" : "outline"}
+                    onClick={() => setSelectedCategory("All")}
+                    className={selectedCategory === "All" ? "bg-[#F58220] hover:bg-[#D66D18]" : "border-gray-200"}
+                >
+                    All
+                </Button>
+                {categories.map((cat) => (
                     <Button
-                        key={cat}
-                        variant={cat === "All" ? "default" : "outline"}
-                        className={cat === "All" ? "bg-[#F58220] hover:bg-[#D66D18]" : "border-gray-200"}
+                        key={cat.id}
+                        variant={selectedCategory === cat.name ? "default" : "outline"}
+                        onClick={() => setSelectedCategory(cat.name)}
+                        className={selectedCategory === cat.name ? "bg-[#F58220] hover:bg-[#D66D18]" : "border-gray-200"}
                     >
-                        {cat}
+                        {cat.name}
                     </Button>
                 ))}
             </div>
@@ -88,11 +193,24 @@ export default function DirectoryPage() {
                         </div>
                     ))
                 ) : (
-                    businesses.map((biz) => (
+                    filteredBusinesses.map((biz) => (
                         <BusinessCard key={biz.id} {...biz} />
                     ))
                 )}
             </div>
         </div>
+    )
+}
+
+export default function DirectoryPage() {
+    return (
+        <Suspense fallback={
+            <div className="container min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="h-12 w-12 text-[#F58220] animate-spin" />
+                <p className="text-gray-500 font-medium">Loading directory...</p>
+            </div>
+        }>
+            <DirectoryContent />
+        </Suspense>
     )
 }

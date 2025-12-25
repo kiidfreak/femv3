@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/a
 
 const getHeaders = () => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) : null
     if (token) headers['Authorization'] = `Bearer ${token}`
     return headers
 }
@@ -39,6 +39,11 @@ export const apiClient = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ identifier, otp })
         }),
+        resendOtp: (identifier: string, method: string) => fetch(`${API_BASE_URL}/auth/resend-otp/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier, method })
+        }),
         logout: () => fetch(`${API_BASE_URL}/auth/logout/`, {
             method: 'POST',
             headers: getHeaders()
@@ -55,22 +60,40 @@ export const apiClient = {
     businesses: {
         list: (params: string) => fetch(`${API_BASE_URL}/businesses?${params}`, { headers: getHeaders() }),
         get: (id: string) => fetch(`${API_BASE_URL}/businesses/${id}`, { headers: getHeaders() }),
-        save: (data: any) => fetch(`${API_BASE_URL}/businesses${data.id ? `/${data.id}` : ''}`, {
+        save: (data: any) => fetch(`${API_BASE_URL}/businesses/${data.id ? `${data.id}/` : ''}`, {
             method: data.id ? 'PATCH' : 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
         }),
+        getStats: () => fetch(`${API_BASE_URL}/businesses/stats/`, { headers: getHeaders() }),
+        incrementView: (id: string) => fetch(`${API_BASE_URL}/businesses/${id}/increment_view/`, {
+            method: 'POST',
+            headers: getHeaders()
+        }),
+        myBusiness: () => fetch(`${API_BASE_URL}/businesses/my_business/`, { headers: getHeaders() }),
     },
 
-    // 3. Catalog (Unified Products & Services)
-    // 3. Catalog (Unified Products & Services)
-    catalog: {
-        list: (params: string) => fetch(`${API_BASE_URL}/catalog?${params}`, { headers: getHeaders() }),
-        get: (id: string) => fetch(`${API_BASE_URL}/catalog/${id}`, { headers: getHeaders() }),
-        save: (data: any) => fetch(`${API_BASE_URL}/catalog${data.id ? `/${data.id}` : ''}`, {
+    // 3. Offerings (Products & Services)
+    products: {
+        save: (data: any) => fetch(`${API_BASE_URL}/products/${data.id ? `${data.id}/` : ''}`, {
             method: data.id ? 'PATCH' : 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
+        }),
+        delete: (id: number) => fetch(`${API_BASE_URL}/products/${id}/`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        }),
+    },
+    services: {
+        save: (data: any) => fetch(`${API_BASE_URL}/services/${data.id ? `${data.id}/` : ''}`, {
+            method: data.id ? 'PATCH' : 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }),
+        delete: (id: number) => fetch(`${API_BASE_URL}/services/${id}/`, {
+            method: 'DELETE',
+            headers: getHeaders()
         }),
     },
 
@@ -97,5 +120,10 @@ export const apiClient = {
                     media_type: type
                 })
             }),
+    },
+
+    // 5. Categories
+    categories: {
+        list: () => fetch(`${API_BASE_URL}/categories/`, { headers: getHeaders() }),
     }
 }

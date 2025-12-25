@@ -8,13 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth"
+import { apiClient } from "@/lib/api-client"
 
 function VerifyOTPContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { verifyOtp, isLoading } = useAuth()
+    const { verifyOtp, loading } = useAuth()
     const [otp, setOtp] = useState("")
     const [error, setError] = useState("")
+    const [resendTimer, setResendTimer] = useState(0)
+    const [isResending, setIsResending] = useState(false)
     const identifier = searchParams.get("identifier") || searchParams.get("phone")
 
     useEffect(() => {
@@ -22,6 +25,37 @@ function VerifyOTPContent() {
             router.push("/auth/login")
         }
     }, [identifier, router])
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout
+        if (resendTimer > 0) {
+            timer = setInterval(() => {
+                setResendTimer((prev) => prev - 1)
+            }, 1000)
+        }
+        return () => clearInterval(timer)
+    }, [resendTimer])
+
+    const handleResend = async () => {
+        if (resendTimer > 0 || isResending) return
+
+        setIsResending(true)
+        setError("")
+        try {
+            const method = identifier?.includes('@') ? 'email' : 'phone'
+            const res = await apiClient.auth.resendOtp(identifier!, method)
+            if (res.ok) {
+                setResendTimer(60)
+            } else {
+                const data = await res.json()
+                setError(data.error || "Failed to resend code")
+            }
+        } catch (err) {
+            setError("Connection error. Please try again.")
+        } finally {
+            setIsResending(false)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -33,7 +67,8 @@ function VerifyOTPContent() {
         }
 
         try {
-            const user = await verifyOtp(identifier!, otp)
+            const rememberMe = searchParams.get("remember_me") === "true"
+            const user = await verifyOtp(identifier!, otp, rememberMe)
             const isFromSignup = searchParams.get("from") === "signup"
 
             // For NEW signups: show account type selection
@@ -48,8 +83,8 @@ function VerifyOTPContent() {
                         router.push("/onboarding/business")
                     }
                 } else {
-                    // Community members go to directory/home
-                    router.push("/")
+                    // Community members go to directory
+                    router.push("/directory")
                 }
             }
         } catch (err: any) {
@@ -81,7 +116,7 @@ function VerifyOTPContent() {
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                                 className="text-center text-4xl tracking-[1em] h-16 font-mono border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] transition-all"
-                                disabled={isLoading}
+                                disabled={loading}
                                 autoFocus
                             />
                             {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
@@ -90,9 +125,9 @@ function VerifyOTPContent() {
                         <Button
                             type="submit"
                             className="w-full h-14 text-lg font-bold bg-[#F58220] hover:bg-[#D66D18] text-white rounded-xl shadow-lg shadow-[#F58220]/20 transition-all hover:scale-[1.02] active:scale-[0.98] btn-press"
-                            disabled={isLoading}
+                            disabled={loading}
                         >
-                            {isLoading ? (
+                            {loading ? (
                                 <div className="flex items-center gap-2">
                                     <Loader2 className="h-5 w-5 animate-spin" />
                                     <span>Verifying</span>
@@ -108,8 +143,13 @@ function VerifyOTPContent() {
                         <div className="text-center space-y-4">
                             <p className="text-sm text-gray-500">
                                 Didn't receive the code?{" "}
-                                <button type="button" className="text-[#F58220] font-bold hover:underline">
-                                    Resend OTP
+                                <button
+                                    type="button"
+                                    onClick={handleResend}
+                                    disabled={resendTimer > 0 || isResending}
+                                    className="text-[#F58220] font-bold hover:underline disabled:text-gray-400 disabled:no-underline"
+                                >
+                                    {isResending ? "Sending..." : resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
                                 </button>
                             </p>
 

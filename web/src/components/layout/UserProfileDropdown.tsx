@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import {
     User, Building2, LayoutDashboard, Settings, LogOut,
-    CheckCircle2, AlertCircle, ChevronRight
+    CheckCircle2, AlertCircle, ChevronRight, ShieldAlert, Info, Check
 } from "lucide-react"
 import { useAuth } from "@/lib/auth"
+import { cn } from "@/lib/utils"
 
 export function UserProfileDropdown() {
     const { user, logout } = useAuth()
@@ -36,23 +37,26 @@ export function UserProfileDropdown() {
 
     // Calculate profile completion
     const getProfileCompletion = () => {
-        let completed = 0
-        const total = user.user_type === 'business_owner' ? 5 : 3
-
-        if (user.first_name) completed++
-        if (user.email) completed++
-        if (user.phone_verified) completed++
+        const steps = [
+            { label: 'Basic Info', description: 'Add your first name to your profile', completed: !!user.first_name },
+            { label: 'Email Address', description: 'Ensure your email is correctly set', completed: !!user.email },
+            { label: 'Phone Verification', description: 'Verify your identity via OTP', completed: !!user.phone_verified },
+        ]
 
         if (user.user_type === 'business_owner') {
-            if (user.has_business_profile) completed++
-            if (user.is_verified) completed++
+            steps.push({ label: 'Business Profile', description: 'Provide details about your business', completed: !!user.has_business_profile })
+            steps.push({ label: 'Church Verification', description: 'Get verified by the church leadership', completed: !!user.is_verified })
         }
 
+        const completedCount = steps.filter(s => s.completed).length
+        const totalCount = steps.length
+
         return {
-            percentage: Math.round((completed / total) * 100),
-            isComplete: completed === total,
-            completed,
-            total
+            percentage: Math.round((completedCount / totalCount) * 100),
+            isComplete: completedCount === totalCount,
+            completed: completedCount,
+            total: totalCount,
+            steps
         }
     }
 
@@ -63,11 +67,20 @@ export function UserProfileDropdown() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 relative">
-                    <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative">
+                    <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative shadow-sm border border-[#F58220]/20">
                         <User className="h-5 w-5 text-[#F58220]" />
                         {isOnboarding && (
-                            <div className="absolute -top-1 -right-1 h-4 w-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
-                                <span className="text-[10px] text-white font-bold">!</span>
+                            <div className={cn(
+                                "absolute -top-1 -right-1 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center shadow-md",
+                                user.user_type === 'business_owner' && !user.is_verified && user.has_business_profile
+                                    ? "bg-blue-500" // Verification issue
+                                    : "bg-orange-500" // Basic profile issue
+                            )}>
+                                {user.user_type === 'business_owner' && !user.is_verified && user.has_business_profile ? (
+                                    <ShieldAlert className="h-2.5 w-2.5 text-white" />
+                                ) : (
+                                    <AlertCircle className="h-2.5 w-2.5 text-white" />
+                                )}
                             </div>
                         )}
                     </div>
@@ -106,8 +119,40 @@ export function UserProfileDropdown() {
                                     {completion.percentage}%
                                 </span>
                             </div>
-                            <Progress value={completion.percentage} className="h-2 mb-2" />
-                            <p className="text-xs text-orange-800">
+                            <Progress value={completion.percentage} className="h-2 mb-3" />
+
+                            {/* Detailed Steps Visualization */}
+                            <div className="space-y-2 mb-4">
+                                {completion.steps.map((step, idx) => (
+                                    <div key={idx} className="flex items-start gap-2 group relative">
+                                        <div className={cn(
+                                            "mt-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                                            step.completed ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                                        )}>
+                                            {step.completed ? (
+                                                <Check className="h-2.5 w-2.5" />
+                                            ) : (
+                                                <Info className="h-2.5 w-2.5" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={cn(
+                                                "text-[10px] font-bold leading-tight",
+                                                step.completed ? "text-gray-400" : "text-orange-900"
+                                            )}>
+                                                {step.label}
+                                            </p>
+                                            {!step.completed && (
+                                                <p className="text-[9px] text-orange-700/70 mt-0.5 transition-all">
+                                                    {step.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="text-[10px] text-orange-800 font-medium mb-1">
                                 {completion.completed} of {completion.total} steps completed
                             </p>
                             <Link href={user.user_type === 'business_owner' ? '/onboarding/business' : '/onboarding/profile'}>
@@ -156,6 +201,7 @@ export function UserProfileDropdown() {
                 <DropdownMenuSeparator />
 
                 {/* Navigation Links */}
+                {/* Navigation Links */}
                 {user.user_type === 'business_owner' ? (
                     <>
                         <DropdownMenuItem asChild>
@@ -165,7 +211,7 @@ export function UserProfileDropdown() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="/my-business" className="cursor-pointer">
+                            <Link href="/dashboard" className="cursor-pointer">
                                 <Building2 className="mr-2 h-4 w-4" />
                                 My Business
                             </Link>
@@ -180,7 +226,7 @@ export function UserProfileDropdown() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="/reviews" className="cursor-pointer">
+                            <Link href="/dashboard/reviews" className="cursor-pointer">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
                                 My Reviews
                             </Link>
@@ -189,7 +235,7 @@ export function UserProfileDropdown() {
                 )}
 
                 <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/dashboard/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                     </Link>

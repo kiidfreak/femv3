@@ -24,7 +24,7 @@ Faith Connect is a premier faith-based commerce and directory platform designed 
 *   **Containerization**: Docker & Docker Compose
 
 ### Frontend
-*   **Framework**: Next.js 14+ (React)
+*   **Framework**: Next.js 14+ (React)           
 *   **Styling**: Tailwind CSS
 *   **UI Components**: Shadcn UI + Radix UI
 *   **State Management**: React Hooks & Context

@@ -11,11 +11,15 @@ import { ShieldCheck, Loader2, Phone, Mail } from "lucide-react"
 import { useAuth } from "@/lib/auth"
 import { toast } from "sonner"
 
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
 export default function LoginPage() {
     const router = useRouter()
-    const { login, isLoading } = useAuth()
+    const { login, loading } = useAuth()
     const [identifier, setIdentifier] = useState("")
     const [method, setMethod] = useState<"phone" | "email">("phone")
+    const [rememberMe, setRememberMe] = useState(true)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -28,7 +32,7 @@ export default function LoginPage() {
         try {
             const resultIdentifier = await login(identifier, method)
             toast.success("Verification code sent!")
-            router.push(`/auth/verify?identifier=${resultIdentifier}&method=${method}`)
+            router.push(`/auth/verify?identifier=${resultIdentifier}&method=${method}&remember_me=${rememberMe}`)
         } catch (err: any) {
             toast.error(err.message || "Something went wrong. Please try again.")
         }
@@ -74,16 +78,31 @@ export default function LoginPage() {
                                 value={identifier}
                                 onChange={(e) => setIdentifier(e.target.value)}
                                 className="h-14 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] transition-all rounded-xl text-lg"
-                                disabled={isLoading}
+                                disabled={loading}
+                                autoFocus
                             />
+                        </div>
+
+                        <div className="flex items-center space-x-2 px-1">
+                            <Checkbox
+                                id="remember_me"
+                                checked={rememberMe}
+                                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                            />
+                            <Label
+                                htmlFor="remember_me"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-600 cursor-pointer"
+                            >
+                                Remember me for 30 days
+                            </Label>
                         </div>
 
                         <Button
                             type="submit"
                             className="w-full h-14 text-lg font-bold bg-[#F58220] hover:bg-[#D66D18] text-white rounded-xl shadow-lg shadow-[#F58220]/20 transition-all hover:scale-[1.02] active:scale-[0.98] mt-2"
-                            disabled={isLoading}
+                            disabled={loading}
                         >
-                            {isLoading ? (
+                            {loading ? (
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             ) : "Get Verification Code"}
                         </Button>
@@ -91,12 +110,17 @@ export default function LoginPage() {
                 </CardContent>
 
                 <CardFooter className="bg-gray-50 border-t border-gray-100 p-8 flex justify-center">
-                    <p className="text-sm text-gray-500 font-medium">
-                        Not part of the community?{" "}
-                        <Link href="/auth/signup" className="text-[#F58220] font-bold hover:underline">
-                            Join Now
+                    <div className="flex flex-col items-center gap-2">
+                        <p className="text-sm text-gray-500 font-medium">
+                            Not part of the community?{" "}
+                            <Link href="/auth/signup" className="text-[#F58220] font-bold hover:underline">
+                                Join Now
+                            </Link>
+                        </p>
+                        <Link href="/auth/support" className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-2">
+                            Trouble logging in?
                         </Link>
-                    </p>
+                    </div>
                 </CardFooter>
             </Card>
         </div>

@@ -30,6 +30,10 @@ import {
 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import Image from "next/image"
+import { useEffect } from "react"
+import { apiClient } from "@/lib/api-client"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 // Business Limits
 const MAX_PRODUCTS = 5
@@ -61,66 +65,64 @@ export default function ManageOfferingsPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
-    // Mock data - replace with API calls
-    const [products, setProducts] = useState<Product[]>([
-        {
-            id: 1,
-            name: "Holy Bible - NIV Edition",
-            description: "New International Version with leather cover",
-            price: 2500,
-            price_currency: "KES",
-            is_active: true,
-            in_stock: true
-        },
-        {
-            id: 2,
-            name: "Prayer Journal",
-            description: "Daily devotional and prayer tracking journal",
-            price: 800,
-            price_currency: "KES",
-            is_active: true,
-            in_stock: true
-        },
-        {
-            id: 3,
-            name: "Worship CD Collection",
-            description: "Top Christian worship songs compilation",
-            price: 500,
-            price_currency: "KES",
-            is_active: false,
-            in_stock: false
-        }
-    ])
+    const [products, setProducts] = useState<Product[]>([])
+    const [services, setServices] = useState<Service[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    const [services, setServices] = useState<Service[]>([
-        {
-            id: 1,
-            name: "Wedding Photography",
-            description: "Professional Christian wedding photography packages",
-            price_range: "KES 15,000 - 50,000",
-            duration: "Full Day",
-            is_active: true
-        },
-        {
-            id: 2,
-            name: "Church Event Planning",
-            description: "Complete event management for church functions",
-            price_range: "KES 10,000 - 30,000",
-            duration: "Varies",
-            is_active: true
-        }
-    ])
+    useEffect(() => {
+        fetchBusinessData()
+    }, [])
 
-    const toggleProductStatus = (id: number) => {
-        setProducts(products.map(p =>
-            p.id === id ? { ...p, is_active: !p.is_active } : p
-        ))
+    const fetchBusinessData = async () => {
+        try {
+            const res = await apiClient.businesses.myBusiness()
+            if (res.ok) {
+                const data = await res.json()
+                setProducts(data.products || [])
+                setServices(data.services || [])
+            } else {
+                toast.error("Failed to load offerings")
+            }
+        } catch (error) {
+            console.error("Error fetching offerings:", error)
+            toast.error("An error occurred")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    const toggleServiceStatus = (id: number) => {
-        setServices(services.map(s =>
-            s.id === id ? { ...s, is_active: !s.is_active } : s
-        ))
+    const toggleProductStatus = async (id: number) => {
+        const product = products.find(p => p.id === id)
+        if (!product) return
+
+        try {
+            const res = await apiClient.products.save({ id, is_active: !product.is_active })
+            if (res.ok) {
+                setProducts(products.map(p =>
+                    p.id === id ? { ...p, is_active: !p.is_active } : p
+                ))
+                toast.success(`Product ${!product.is_active ? 'activated' : 'deactivated'}`)
+            }
+        } catch (error) {
+            toast.error("Failed to update status")
+        }
+    }
+
+    const toggleServiceStatus = async (id: number) => {
+        const service = services.find(s => s.id === id)
+        if (!service) return
+
+        try {
+            const res = await apiClient.services.save({ id, is_active: !service.is_active })
+            if (res.ok) {
+                setServices(services.map(s =>
+                    s.id === id ? { ...s, is_active: !s.is_active } : s
+                ))
+                toast.success(`Service ${!service.is_active ? 'activated' : 'deactivated'}`)
+            }
+        } catch (error) {
+            toast.error("Failed to update status")
+        }
     }
 
     const filteredProducts = products.filter(p =>
@@ -137,6 +139,15 @@ export default function ManageOfferingsPage() {
     const canAddService = services.length < MAX_SERVICES
     const remainingProducts = MAX_PRODUCTS - products.length
     const remainingServices = MAX_SERVICES - services.length
+
+    if (isLoading) {
+        return (
+            <div className="container min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="h-12 w-12 text-[#F58220] animate-spin" />
+                <p className="text-gray-500 font-medium">Loading your offerings...</p>
+            </div>
+        )
+    }
 
     return (
         <div className="container py-8 space-y-6 animate-fade-in-up">

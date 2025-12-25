@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
 
 interface BusinessData {
     business_name: string
@@ -36,6 +37,7 @@ interface Category {
 
 export default function BusinessOnboardingPage() {
     const router = useRouter()
+    const { updateUser } = useAuth()
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [categories, setCategories] = useState<Category[]>([])
@@ -112,8 +114,12 @@ export default function BusinessOnboardingPage() {
             }
 
             await apiClient.businesses.save(payload)
+
+            // Update local user state to reflect they now have a business
+            updateUser({ has_business_profile: true })
+
             toast.success("Business profile created successfully!")
-            router.push("/dashboard")
+            router.push("/dashboard?highlight=catalog")
         } catch (error: any) {
             console.error("Failed to create business:", error)
             // Handle "Phone number already registered" if backend throws it

@@ -28,7 +28,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:faithconnect_dev_password@db:5432/faithconnect
+      - DATABASE_URL=postgresql://postgres:EQnOgRPMvZTtyDhlUHOcgpNSsVXwYOtR@centerbeam.proxy.rlwy.net:22007/railway
       - DEBUG=True
       - SECRET_KEY=${SECRET_KEY:-django-insecure-please-change-in-production}
       - ALLOWED_HOSTS=*
@@ -46,6 +46,7 @@ services:
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
     volumes:
+      - ./faith_backend:/app
       - ./faith_backend/media:/app/media
       - ./faith_backend/static:/app/static
     depends_on:
@@ -65,11 +66,13 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v3
     container_name: faithconnect_frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v3
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v3
       - NODE_ENV=production
     depends_on:
       - backend

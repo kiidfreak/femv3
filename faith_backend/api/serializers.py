@@ -33,7 +33,21 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'business', 'product', 'service', 'user_name', 'rating', 'review_text', 'is_verified', 'created_at']
+        fields = ['id', 'business', 'user_name', 'rating', 'review_text', 'is_verified', 'created_at']
+
+class BusinessListSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    owner_name = serializers.CharField(source='user.first_name', read_only=True)
+    product_count = serializers.IntegerField(source='products.count', read_only=True)
+    service_count = serializers.IntegerField(source='services.count', read_only=True)
+    
+    class Meta:
+        model = Business
+        fields = [
+            'id', 'business_name', 'description', 'address', 
+            'category', 'category_name', 'owner_name', 'rating', 'review_count',
+            'is_verified', 'product_count', 'service_count'
+        ]
 
 class BusinessSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -41,12 +55,17 @@ class BusinessSerializer(serializers.ModelSerializer):
     services = ServiceSerializer(many=True, read_only=True)
     products = ProductSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
+    view_count = serializers.SerializerMethodField()
+
+    def get_view_count(self, obj):
+        return getattr(obj, 'view_count', 0)
 
     class Meta:
         model = Business
         fields = [
             'id', 'business_name', 'description', 'address', 
-            'category', 'category_name', 'owner_name', 'rating', 'review_count', 
+            'phone', 'email', 'website',
+            'category', 'category_name', 'owner_name', 'rating', 'review_count', 'view_count',
             'is_verified', 'services', 'products', 'reviews'
         ]
 

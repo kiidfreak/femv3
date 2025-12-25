@@ -6,9 +6,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Building2, Users, ArrowRight, Check, Sparkles } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
 
 export default function AccountTypePage() {
     const router = useRouter()
+    const { updateUser } = useAuth()
     const [selected, setSelected] = useState<"member" | "business_owner" | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -18,10 +21,15 @@ export default function AccountTypePage() {
         setIsLoading(true)
 
         try {
-            await apiClient.auth.updateProfile({ user_type: selected })
+            const response = await apiClient.auth.updateProfile({ user_type: selected })
+            const data = await response.json()
+
+            if (response.ok) {
+                updateUser(data.user)
+            }
 
             if (selected === "member") {
-                router.push("/")
+                router.push("/directory")
             } else {
                 // Business owners go to onboarding
                 router.push("/onboarding/business")

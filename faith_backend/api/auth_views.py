@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.db import IntegrityError
+from .models import PendingUser
 
 User = get_user_model()
 
@@ -103,19 +104,17 @@ class SignupView(APIView):
              return Response({'error': 'Email address already registered'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            user = User.objects.create(
+            # Delete any existing pending record for this phone
+            PendingUser.objects.filter(phone=phone).delete()
+            
+            otp = str(random.randint(100000, 999999))
+            pending_user = PendingUser.objects.create(
                 phone=phone,
                 email=email,
                 first_name=first_name,
                 partnership_number=partnership_number,
-                is_active=True
+                otp=otp
             )
-            
-            otp = str(random.randint(100000, 999999))
-            user.otp = otp
-            user.save()
-        except IntegrityError:
-             return Response({'error': 'Account with this details already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
              return Response({'error': f'Registration failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -125,7 +124,47 @@ class SignupView(APIView):
         else:
             success = send_sms_otp(phone, otp)
             
-        return Response({'message': 'Account created. OTP sent.', 'identifier': phone if method == 'phone' else email, 'method': method})
+        return Response({'message': 'OTP sent. Please verify to complete registration.', 'identifier': phone if method == 'phone' else email, 'method': method})
+
+class ResendOTPView(APIView):
+    permission_classes = []
+    
+    def post(self, request):
+        identifier = request.data.get('identifier')
+        method = request.data.get('method', 'phone')
+        
+        if not identifier:
+            return Response({'error': 'Identifier is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp = str(random.randint(100000, 999999))
+        first_name = "User"
+        
+        # Check existing users (for Login resend)
+        user = User.objects.filter(phone=identifier).first() or User.objects.filter(email=identifier).first()
+        if user:
+            user.otp = otp
+            user.save()
+            first_name = user.first_name
+        else:
+            # Check pending users (for Signup resend)
+            pending = PendingUser.objects.filter(phone=identifier).first() or PendingUser.objects.filter(email=identifier).first()
+            if pending:
+                pending.otp = otp
+                pending.save()
+                first_name = pending.first_name
+            else:
+                return Response({'error': 'No pending registration or account found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        success = False
+        if method == 'email' and (user.email if user else pending.email):
+            success = send_email_otp(user.email if user else pending.email, otp, first_name)
+        else:
+            success = send_sms_otp(user.phone if user else pending.phone, otp)
+            
+        if not success:
+            return Response({'error': 'Failed to resend code'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response({'message': 'OTP resent successfully'})
 
 class VerifyOTPView(APIView):
     permission_classes = []
@@ -137,14 +176,33 @@ class VerifyOTPView(APIView):
         if not identifier or not otp:
             return Response({'error': 'Identifier and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
             
+        # Try finding in existing users first (Login case)
         user = User.objects.filter(phone=identifier, otp=otp).first() or User.objects.filter(email=identifier, otp=otp).first()
         
         if not user:
-            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user.otp = None
-        user.is_verified = True
-        user.save()
+            # Try finding in pending users (Signup case)
+            pending = PendingUser.objects.filter(phone=identifier, otp=otp).first() or PendingUser.objects.filter(email=identifier, otp=otp).first()
+            if not pending:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Successful signup verification - Create the user now
+            try:
+                user = User.objects.create(
+                    phone=pending.phone,
+                    email=pending.email,
+                    first_name=pending.first_name,
+                    partnership_number=pending.partnership_number,
+                    phone_verified=True,
+                    is_active=True
+                )
+                pending.delete()
+            except Exception as e:
+                return Response({'error': f'Failed to create account: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            # Successful login verification
+            user.otp = None
+            user.phone_verified = True
+            user.save()
         
         refresh = RefreshToken.for_user(user)
         
@@ -157,7 +215,9 @@ class VerifyOTPView(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'user_type': user.user_type,
-                'has_business_profile': user.businesses.exists() if hasattr(user, 'businesses') else False
+                'phone_verified': user.phone_verified,
+                'has_business_profile': user.has_business_profile,
+                'is_verified': user.is_verified # Church verification
             }
         })
 
@@ -166,20 +226,50 @@ from rest_framework.permissions import IsAuthenticated
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user = request.user
+        return Response({
+            'user': {
+                'id': user.id,
+                'phone': user.phone,
+                'email': user.email,
+                'first_name': user.first_name,
+                'user_type': user.user_type,
+                'phone_verified': user.phone_verified,
+                'has_business_profile': user.has_business_profile,
+                'is_verified': user.is_verified # Church verification
+            }
+        })
+
     def patch(self, request):
         user = request.user
         user_type = request.data.get('user_type')
+        first_name = request.data.get('first_name')
+        email = request.data.get('email')
         
         if user_type:
             if user_type not in ['member', 'business_owner', 'church_admin']:
                 return Response({'error': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
             user.user_type = user_type
-            user.save()
+        
+        if first_name:
+            user.first_name = first_name
+            
+        if email:
+            user.email = email
+            
+        user.save()
             
         return Response({
             'message': 'Profile updated',
             'user': {
                 'id': user.id,
-                'user_type': user.user_type
+                'phone': user.phone,
+                'email': user.email,
+                'first_name': user.first_name,
+                'user_type': user.user_type,
+                'phone_verified': user.phone_verified,
+                'has_business_profile': user.has_business_profile,
+                'is_verified': user.is_verified
             }
         })
