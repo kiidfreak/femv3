@@ -32,7 +32,7 @@ export default function SignupPage() {
         try {
             const identifier = await signup({ ...formData, method })
             toast.success("Account created! Sending verification code...")
-            router.push(`/auth/verify?identifier=${identifier}&method=${method}`)
+            router.push(`/auth/verify?identifier=${identifier}&method=${method}&from=signup`)
         } catch (err: any) {
             toast.error(err.message || "Signup failed. Please try again.")
         }

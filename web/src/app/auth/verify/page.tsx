@@ -34,17 +34,23 @@ function VerifyOTPContent() {
 
         try {
             const user = await verifyOtp(identifier!, otp)
+            const isFromSignup = searchParams.get("from") === "signup"
 
-            // Intelligent Redirect based on User Type & Profile Status
-            if (user.user_type === 'business_owner') {
-                if (user.has_business_profile) {
-                    router.push("/dashboard")
-                } else {
-                    router.push("/onboarding/business")
-                }
+            // For NEW signups: show account type selection
+            if (isFromSignup) {
+                router.push("/auth/account-type")
             } else {
-                // Community members (and default users) go to directory/home
-                router.push("/")
+                // For EXISTING users logging in: direct based on user_type
+                if (user.user_type === 'business_owner') {
+                    if (user.has_business_profile) {
+                        router.push("/dashboard")
+                    } else {
+                        router.push("/onboarding/business")
+                    }
+                } else {
+                    // Community members go to directory/home
+                    router.push("/")
+                }
             }
         } catch (err: any) {
             setError(err.message || "Invalid or expired OTP")
