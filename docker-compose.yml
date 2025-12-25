@@ -1,6 +1,23 @@
 services:
-  # PostgreSQL Database (using Railway)
-  # Note: Using external Railway database, no local postgres service needed
+  # PostgreSQL Database (Local)
+  db:
+    image: postgres:15-alpine
+    container_name: faithconnect_db
+    environment:
+      - POSTGRES_DB=faithconnect
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=faithconnect_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - faithconnect_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Django Backend
   backend:
@@ -11,8 +28,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:EQnOgRPMvZTtyDhlUHOcgpNSsVXwYOtR@centerbeam.proxy.rlwy.net:22007/railway
-      - DEBUG=False
+      - DATABASE_URL=postgresql://postgres:faithconnect_dev_password@db:5432/faithconnect
+      - DEBUG=True
       - SECRET_KEY=${SECRET_KEY:-django-insecure-please-change-in-production}
       - ALLOWED_HOSTS=*
       - BREVO_API_KEY=${BREVO_API_KEY}
@@ -31,6 +48,9 @@ services:
     volumes:
       - ./faith_backend/media:/app/media
       - ./faith_backend/static:/app/static
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - faithconnect_network
     healthcheck:
@@ -84,5 +104,6 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   static_volume:
   media_volume:
