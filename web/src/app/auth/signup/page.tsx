@@ -9,10 +9,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ShieldCheck, Loader2, Phone, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth"
+import { useEffect } from "react"
 
 export default function SignupPage() {
     const router = useRouter()
-    const { signup, loading } = useAuth()
+    const { signup, loading, user } = useAuth()
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (user) {
+            router.push('/dashboard')
+        }
+    }, [user, router])
     const [formData, setFormData] = useState({
         first_name: "",
         email: "",

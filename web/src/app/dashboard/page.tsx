@@ -68,7 +68,7 @@ function DashboardContent() {
                     ]
                 })
                 if (res.status === 404) {
-                    toast.info("Setting up your dashboard...")
+                    // No toast here, we show the onboarding banner in the UI instead
                 }
             }
         } catch (error) {

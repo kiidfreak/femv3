@@ -81,9 +81,9 @@ export default function ManageOfferingsPage() {
                 setProducts(data.products || [])
                 setServices(data.services || [])
             } else if (res.status === 404) {
-                toast.info("Create a business profile to start adding offerings!", {
-                    description: "You'll be able to manage products and services here once your profile is set up."
-                })
+                // Return empty arrays to stop loading state
+                setProducts([])
+                setServices([])
             } else {
                 toast.error("Failed to load offerings")
             }

@@ -10,16 +10,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ShieldCheck, Loader2, Phone, Mail } from "lucide-react"
 import { useAuth } from "@/lib/auth"
 import { toast } from "sonner"
+import { useEffect } from "react"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter()
-    const { login, loading } = useAuth()
+    const searchParams = useSearchParams()
+    const { login, loading, user } = useAuth()
     const [identifier, setIdentifier] = useState("")
     const [method, setMethod] = useState<"phone" | "email">("phone")
     const [rememberMe, setRememberMe] = useState(true)
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (user) {
+            const redirect = searchParams.get('redirect') || '/dashboard'
+            router.push(redirect)
+        }
+    }, [user, router, searchParams])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -124,5 +136,18 @@ export default function LoginPage() {
                 </CardFooter>
             </Card>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="container min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="h-12 w-12 text-[#F58220] animate-spin" />
+                <p className="text-gray-500 font-medium">Loading session...</p>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     )
 }

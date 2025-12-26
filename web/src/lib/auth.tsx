@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<any | null>(null)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
 
     // Check for existing session on mount
     useEffect(() => {
@@ -33,29 +33,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const daysSinceLogin = (new Date().getTime() - new Date(loginDate).getTime()) / (1000 * 60 * 60 * 24)
                     if (daysSinceLogin > 30) {
                         logout()
+                        setLoading(false)
                         return
                     }
                 }
 
                 try {
                     // Fetch user profile to verify token and get fresh data
-                    const response = await fetch("http://localhost:8000/api/v3/auth/profile/", {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3"}/auth/profile/`, {
                         headers: {
-                            "Authorization": `Bearer ${accessToken}`
+                            "Authorization": `Bearer ${accessToken}`,
+                            "Content-Type": "application/json"
                         }
                     })
                     if (response.ok) {
                         const data = await response.json()
                         setUser(data.user) // Access nested user object
                     } else {
-                        // If token expired but we have refresh token...
-                        // For now just logout
+                        // Token invalid/expired
                         logout()
                     }
                 } catch (error) {
                     console.error("Auth restoration failed:", error)
                 }
             }
+            setLoading(false)
         }
         checkAuth()
     }, [])
@@ -133,9 +135,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!accessToken) return
 
         try {
-            const response = await fetch("http://localhost:8000/api/v3/auth/profile/", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3"}/auth/profile/`, {
                 headers: {
-                    "Authorization": `Bearer ${accessToken}`
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json"
                 }
             })
             if (response.ok) {
