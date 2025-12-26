@@ -117,21 +117,25 @@ class BusinessViewSet(viewsets.ModelViewSet):
         if business.phone: profile_score += 5
         if business.email: profile_score += 5
         if business.website: profile_score += 5
-        if business.business_logo_url: profile_score += 5
-        if business.business_image_url: profile_score += 5
+        if business.business_logo: profile_score += 5  # Fixed: use business_logo not business_logo_url
+        if business.business_image: profile_score += 5  # Fixed: use business_image not business_image_url
         if business.address: profile_score += 5
         # The remaining 5 can be for having at least 1 offering
         if business.prod_count > 0 or business.serv_count > 0: profile_score += 5
         
-        # Profile score is out of 30, scale it to max 20 if needed, or keep as is.
-        # Let's say profile completeness is max 20.
+        # Profile score is out of 40, scale it to max 20
         profile_score_normalized = min(20, (profile_score / 40) * 20)
         
         # Reviews score (max 25)
         reviews_score = min(25, (business.rating * (min(business.review_count, 10) / 10) / 5) * 25)
         
-        # Account age (placeholder 15)
-        age_score = 15
+        # Account age (max 15) - Real calculation
+        if business.created_at:
+            account_age_days = (timezone.now() - business.created_at).days
+            # Scale: 0 days = 0, 365+ days = 15
+            age_score = min(15, (account_age_days / 365) * 15)
+        else:
+            age_score = 0
         
         trust_score = church_verification + profile_score + reviews_score + age_score
         
@@ -190,10 +194,10 @@ class BusinessViewSet(viewsets.ModelViewSet):
             'products_count': getattr(business, 'prod_count', 0),
             'services_count': getattr(business, 'serv_count', 0),
             'trust_breakdown': [
-                {'label': 'Church Verification', 'score': church_verification, 'max': 40, 'status': 'Verified' if business.is_verified else 'Pending', 'color': 'bg-green-500'},
-                {'label': 'Profile Completeness', 'score': round(profile_score_normalized), 'max': 20, 'status': 'High' if profile_score_normalized > 15 else 'Medium', 'color': 'bg-blue-500'},
-                {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Good' if reviews_score > 15 else 'Developing', 'color': 'bg-yellow-500'},
-                {'label': 'Account Age', 'score': age_score, 'max': 15, 'status': 'Stable Member', 'color': 'bg-purple-500'},
+                {'label': 'Church Verification', 'score': round(church_verification), 'max': 40, 'status': 'Verified' if business.is_verified else 'Pending', 'color': 'bg-green-500' if business.is_verified else 'bg-gray-300'},
+                {'label': 'Profile Completeness', 'score': round(profile_score_normalized), 'max': 20, 'status': 'Complete' if profile_score_normalized >= 18 else ('High' if profile_score_normalized > 12 else ('Medium' if profile_score_normalized > 6 else 'Low')), 'color': 'bg-blue-500'},
+                {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Excellent' if reviews_score >= 20 else ('Good' if reviews_score > 12 else ('Fair' if reviews_score > 5 else 'None')), 'color': 'bg-yellow-500'},
+                {'label': 'Account Age', 'score': round(age_score), 'max': 15, 'status': f'{account_age_days} days' if business.created_at else 'New', 'color': 'bg-purple-500'},
             ],
             'daily_views': daily_views,
             'referral_sources': referral_sources if referral_sources else [{'source': 'Direct', 'percentage': 100, 'color': '#F58220'}]
