@@ -1,5 +1,5 @@
 from django.urls import path, include
-# Trigger reload
+# Trigger reload again
 from rest_framework.routers import DefaultRouter
 from .views import (
     UserViewSet, BusinessViewSet, CategoryViewSet,
@@ -7,6 +7,7 @@ from .views import (
 )
 from .auth_views import PhoneLoginView, SignupView, VerifyOTPView, UpdateProfileView, ResendOTPView
 from .role_views import RoleViewSet, UserRoleViewSet, PermissionViewSet
+from .notification_views import NotificationViewSet, NotificationPreferenceViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -21,6 +22,10 @@ router.register(r'favorites', FavoriteViewSet, basename='favorite')
 router.register(r'roles', RoleViewSet, basename='role')
 router.register(r'user-roles', UserRoleViewSet, basename='user-role')
 router.register(r'permissions', PermissionViewSet, basename='permission')
+
+# Notifications
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'notification-preferences', NotificationPreferenceViewSet, basename='notification-preference')
 
 urlpatterns = [
     # Auth endpoints

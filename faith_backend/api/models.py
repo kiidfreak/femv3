@@ -34,7 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_verified = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)  # Email verification status
     phone_verified = models.BooleanField(default=False)  # Phone verification status
-    profile_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='profile_image_url')
+    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True, db_column='profile_image_url')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -66,17 +66,40 @@ class Business(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='businesses')
     business_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
+    twitter_url = models.CharField(max_length=500, blank=True, null=True)
+    linkedin_url = models.CharField(max_length=500, blank=True, null=True)
+    youtube_url = models.CharField(max_length=500, blank=True, null=True)
+    business_type = models.CharField(max_length=100, blank=True, null=True)
+    subcategory = models.CharField(max_length=100, blank=True, null=True)
+    
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
+    website = models.URLField(max_length=500, blank=True, null=True)
     address = models.TextField()
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.IntegerField(default=0)
     view_count = models.IntegerField(default=0)
-    business_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_image_url')
-    business_logo_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_logo_url')
+    
+    # Changed to ImageField to match Product/Service patterns and support multipart uploads
+    business_image = models.ImageField(
+        upload_to='businesses/', 
+        blank=True, 
+        null=True, 
+        db_column='business_image_url'
+    )
+    business_logo = models.ImageField(
+        upload_to='businesses/logos/', 
+        blank=True, 
+        null=True, 
+        db_column='business_logo_url'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,7 +112,7 @@ class Service(models.Model):
     description = models.TextField(blank=True, null=True)
     price_range = models.CharField(max_length=100, blank=True, null=True)
     duration = models.CharField(max_length=100, blank=True, null=True)
-    service_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='service_image_url')
+    service_image = models.ImageField(upload_to='services/', blank=True, null=True, db_column='service_image_url')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -102,7 +125,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_currency = models.CharField(max_length=10, default='KES')
-    product_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='product_image_url')
+    product_image = models.ImageField(upload_to='products/', blank=True, null=True, db_column='product_image_url')
     is_active = models.BooleanField(default=True)
     in_stock = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -147,3 +170,4 @@ class Favorite(models.Model):
 
 # Import Role and UserRole models for Django to discover them
 from .roles import Role, UserRole
+from .notification_models import Notification, NotificationPreference

@@ -118,6 +118,15 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@faithconnect.biz')
 SMS_API_KEY = os.getenv('SMS_API_KEY')
 SMS_FROM_NUMBER = os.getenv('SMS_FROM_NUMBER', 'Swiftt_OTP')
 
+# Ndovubase SMS Service
+NDOVUBASE_API_KEY = os.getenv('NDOVUBASE_API_KEY')
+NDOVUBASE_SENDER_ID = os.getenv('NDOVUBASE_SENDER_ID', 'FaithConnect')
+
+# Brevo Email Service  
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+BREVO_SENDER_EMAIL = os.getenv('BREVO_SENDER_EMAIL', 'noreply@faithconnect.co.ke')
+BREVO_SENDER_NAME = os.getenv('BREVO_SENDER_NAME', 'Faith Connect')
+
 # DRF Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

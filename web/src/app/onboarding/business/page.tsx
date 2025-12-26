@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,6 +41,23 @@ export default function BusinessOnboardingPage() {
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [categories, setCategories] = useState<Category[]>([])
+
+    // Logo State
+    const [logoFile, setLogoFile] = useState<File | null>(null)
+    const [logoPreview, setLogoPreview] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleLogoClick = () => {
+        fileInputRef.current?.click()
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setLogoFile(file)
+            setLogoPreview(URL.createObjectURL(file))
+        }
+    }
 
     // Fetch categories on mount
     useEffect(() => {
@@ -104,17 +121,30 @@ export default function BusinessOnboardingPage() {
                 finalDescription += `\n\nPartnership Number: ${businessData.partnership_number}`
             }
 
-            const payload = {
-                business_name: businessData.business_name,
-                description: finalDescription,
-                category: businessData.category_id,
-                phone: businessData.phone,
-                email: businessData.email,
-                website: businessData.website,
-                address: `${businessData.address}, ${businessData.city}, ${businessData.county}`,
+            const formData = new FormData()
+            formData.append('business_name', businessData.business_name)
+            formData.append('description', finalDescription)
+            formData.append('category', businessData.category_id?.toString() || '')
+            formData.append('phone', businessData.phone)
+            formData.append('email', businessData.email)
+            formData.append('website', businessData.website)
+            formData.append('address', `${businessData.address}, ${businessData.city}, ${businessData.county}`)
+
+            if (logoFile) {
+                // Must match the serializer field name 'business_logo' (mapped from business_logo_url but upload expects field name)
+                formData.append('business_logo', logoFile)
             }
 
-            const res = await apiClient.businesses.save(payload)
+            const token = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) : null
+            const headers: Record<string, string> = {}
+            if (token) headers['Authorization'] = `Bearer ${token}`
+
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3"
+            const res = await fetch(`${API_URL}/businesses/`, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            })
 
             if (res.ok) {
                 // Update local user state to reflect they now have a business
@@ -123,7 +153,18 @@ export default function BusinessOnboardingPage() {
                 router.push("/dashboard?highlight=catalog")
             } else {
                 const errorData = await res.json()
-                const errorMessage = errorData.error || errorData.detail || "Failed to create business profile"
+                // Check if we have field-specific errors
+                let errorMessage = "Failed to create business profile"
+                const fieldErrors = Object.keys(errorData).filter(key => Array.isArray(errorData[key]))
+                if (fieldErrors.length > 0) {
+                    // Extract first error from first field
+                    const firstField = fieldErrors[0]
+                    errorMessage = `${firstField.charAt(0).toUpperCase() + firstField.slice(1)}: ${errorData[firstField][0]}`
+                } else if (errorData.error) {
+                    errorMessage = errorData.error
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail
+                }
                 toast.error(errorMessage)
             }
         } catch (error: any) {
@@ -280,6 +321,7 @@ export default function BusinessOnboardingPage() {
                                                 onChange={(e) => setBusinessData({ ...businessData, website: e.target.value })}
                                                 className="h-12 text-lg"
                                             />
+                                            <p className="text-xs text-gray-500 mt-1 ml-1">Must start with http:// or https://</p>
                                         </div>
                                     </div>
                                 )}
@@ -336,9 +378,31 @@ export default function BusinessOnboardingPage() {
                                                 </div>
                                                 <h3 className="text-lg font-bold text-[#1A1A1A]">Almost Done!</h3>
                                             </div>
-                                            <p className="text-gray-700">
+                                            <p className="text-gray-700 mb-4">
                                                 Your business profile is ready to publish. Review the details on the right and click "Publish Profile" when you're ready.
                                             </p>
+
+                                            {/* Logo Upload in Review Step */}
+                                            <div className="flex items-center gap-4 p-4 bg-white/50 rounded-lg border border-[#F58220]/20">
+                                                <div
+                                                    className="h-16 w-16 bg-white rounded-lg border-2 border-dashed border-[#F58220]/50 flex items-center justify-center cursor-pointer overflow-hidden relative group"
+                                                    onClick={handleLogoClick}
+                                                >
+                                                    {logoPreview ? (
+                                                        <img src={logoPreview} alt="Logo" className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <Upload className="h-6 w-6 text-[#F58220]" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-[#1A1A1A]">
+                                                        {logoPreview ? "Business Logo Added" : "Add a Business Logo"}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {logoPreview ? "Click image to change" : "helps customers recognize you"}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="border-t pt-6">
@@ -406,8 +470,25 @@ export default function BusinessOnboardingPage() {
                             <Card className="border-none shadow-xl overflow-hidden">
                                 <div className="h-32 bg-gradient-to-br from-[#F58220]/20 to-[#F58220]/5" />
                                 <CardContent className="p-6 -mt-12">
-                                    <div className="bg-white h-20 w-20 rounded-xl shadow-lg flex items-center justify-center mb-4 border-4 border-white">
-                                        <Building2 className="h-10 w-10 text-[#F58220]" />
+                                    <div
+                                        className="bg-white h-20 w-20 rounded-xl shadow-lg flex items-center justify-center mb-4 border-4 border-white cursor-pointer relative overflow-hidden group"
+                                        onClick={handleLogoClick}
+                                    >
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                        />
+                                        {logoPreview ? (
+                                            <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-cover" />
+                                        ) : (
+                                            <Building2 className="h-10 w-10 text-[#F58220]" />
+                                        )}
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Upload className="h-6 w-6 text-white" />
+                                        </div>
                                     </div>
 
                                     <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">
@@ -424,6 +505,17 @@ export default function BusinessOnboardingPage() {
                                         <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                                             {businessData.description}
                                         </p>
+                                    )}
+
+                                    {businessData.website && (
+                                        <a
+                                            href={businessData.website}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-[#F58220] hover:underline mb-4 block flex items-center gap-1"
+                                        >
+                                            <Globe className="h-3 w-3" /> Visit Website
+                                        </a>
                                     )}
 
                                     <div className="space-y-2 text-sm text-gray-600 mb-4">

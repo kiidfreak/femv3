@@ -58,23 +58,30 @@ export default function FavoritesPage() {
                                     id={fav.business}
                                     name={fav.business_name}
                                     category={fav.category_name}
-                                    location=""
-                                    rating={0}
-                                    reviews={0}
-                                    verified={false}
+                                    location={fav.location || ""}
+                                    rating={fav.rating || 0}
+                                    reviews={fav.review_count || 0}
+                                    verified={fav.verified || false}
+                                    image={fav.business_logo || fav.business_image}
                                     isInitialFavorite={true}
                                 />
                             )
                         } else {
+                            const isProduct = !!fav.product
                             return (
                                 <OfferingCard
                                     key={`off-${fav.id}`}
                                     id={fav.product || fav.service}
-                                    businessId=""
-                                    businessName={fav.business_name}
-                                    name={fav.product_name || fav.service_name}
-                                    description=""
-                                    type={fav.product ? "product" : "service"}
+                                    businessId={fav.business} // Favorite might not link to business directly here if offering-only fav? Check model.
+                                    businessName={fav.business_name} // Might be null if directoffering fav?
+                                    name={isProduct ? fav.product_name : fav.service_name}
+                                    description={isProduct ? fav.product_description : fav.service_description}
+                                    type={isProduct ? "product" : "service"}
+                                    price={fav.product_price}
+                                    priceCurrency={fav.product_currency}
+                                    priceRange={fav.service_price_range}
+                                    duration={fav.service_duration}
+                                    image={isProduct ? fav.product_image : fav.service_image}
                                     isInitialFavorite={true}
                                 />
                             )

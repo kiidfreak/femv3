@@ -60,6 +60,8 @@ import { OfferingCard } from "@/components/directory/OfferingCard";
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredOfferings, setFeaturedOfferings] = useState<any[]>([]);
+  const [stats, setStats] = useState({ total_businesses: 0, total_members: 0, verified_percentage: 0, avg_rating: 0 });
+  const [recentMembers, setRecentMembers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -93,7 +95,33 @@ export default function Home() {
       }
     };
 
+    const fetchStats = async () => {
+      try {
+        const res = await apiClient.businesses.getPublicStats();
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+
+    const fetchRecentMembers = async () => {
+      try {
+        const res = await apiClient.users.getRecentMembers();
+        if (res.ok) {
+          const data = await res.json();
+          setRecentMembers(data.slice(0, 4)); // Show only 4 avatars
+        }
+      } catch (error) {
+        console.error('Failed to fetch recent members:', error);
+      }
+    };
+
     fetchData();
+    fetchStats();
+    fetchRecentMembers();
   }, []);
 
   return (
@@ -239,20 +267,48 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="p-4 border-l-4 border-[#F58220]">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">70+</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">{stats.total_businesses}+</div>
                   <div className="text-gray-600">Local Businesses</div>
                 </div>
                 <div className="p-4 border-l-4 border-gray-200">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">2,500+</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">{stats.total_members.toLocaleString()}+</div>
                   <div className="text-gray-600">Community Members</div>
                 </div>
                 <div className="p-4 border-l-4 border-gray-200">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">85%</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">{stats.verified_percentage}%</div>
                   <div className="text-gray-600">Verified Businesses</div>
                 </div>
                 <div className="p-4 border-l-4 border-[#F58220]">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">4.8</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">{stats.avg_rating}</div>
                   <div className="text-gray-600">Average Rating</div>
+                </div>
+              </div>
+
+              {/* Recent Business Owners */}
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="flex -space-x-3">
+                    {recentMembers.length > 0 ? (
+                      recentMembers.map((member, idx) => (
+                        <div key={idx} className="w-12 h-12 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+                          {member.profile_image_url ? (
+                            <img src={member.profile_image_url} alt={member.first_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#F58220] text-white font-bold">
+                              {member.first_name?.charAt(0) || 'U'}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      [1, 2, 3, 4].map((i) => (
+                        <div key={i} className="w-12 h-12 rounded-full border-2 border-white bg-gray-300" />
+                      ))
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Joined by {stats.total_businesses.toLocaleString()}+ businesses
+                  </p>
                 </div>
               </div>
             </div>

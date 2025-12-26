@@ -29,6 +29,11 @@ export const apiClient = {
         return res.json();
     },
 
+    // Users
+    users: {
+        getRecentMembers: () => fetch(`${API_BASE_URL}/users/recent_members/`, { headers: { 'Content-Type': 'application/json' } }),
+    },
+
     // 1. Auth (Consolidated)
     auth: {
         login: (identifier: string, method: 'phone' | 'email' = 'phone') => fetch(`${API_BASE_URL}/auth/login/`, {
@@ -78,16 +83,24 @@ export const apiClient = {
             headers: getHeaders()
         }),
         myBusiness: () => fetch(`${API_BASE_URL}/businesses/my_business/`, { headers: getHeaders() }),
+        getPublicStats: () => fetch(`${API_BASE_URL}/businesses/public_stats/`, { headers: { 'Content-Type': 'application/json' } }),
     },
 
     // 3. Offerings (Products & Services)
     products: {
         list: (params?: string) => fetch(`${API_BASE_URL}/products/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
-        save: (data: any) => fetch(`${API_BASE_URL}/products/${data.id ? `${data.id}/` : ''}`, {
-            method: data.id ? 'PATCH' : 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        }),
+        save: (data: any) => {
+            const isFormData = data instanceof FormData;
+            const headers = getHeaders();
+            if (isFormData) delete headers['Content-Type'];
+            const id = isFormData ? data.get('id') : data.id;
+
+            return fetch(`${API_BASE_URL}/products/${id ? `${id}/` : ''}`, {
+                method: id ? 'PATCH' : 'POST',
+                headers,
+                body: isFormData ? data : JSON.stringify(data)
+            })
+        },
         delete: (id: number) => fetch(`${API_BASE_URL}/products/${id}/`, {
             method: 'DELETE',
             headers: getHeaders()
@@ -95,11 +108,18 @@ export const apiClient = {
     },
     services: {
         list: (params?: string) => fetch(`${API_BASE_URL}/services/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
-        save: (data: any) => fetch(`${API_BASE_URL}/services/${data.id ? `${data.id}/` : ''}`, {
-            method: data.id ? 'PATCH' : 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        }),
+        save: (data: any) => {
+            const isFormData = data instanceof FormData;
+            const headers = getHeaders();
+            if (isFormData) delete headers['Content-Type'];
+            const id = isFormData ? data.get('id') : data.id;
+
+            return fetch(`${API_BASE_URL}/services/${id ? `${id}/` : ''}`, {
+                method: id ? 'PATCH' : 'POST',
+                headers,
+                body: isFormData ? data : JSON.stringify(data)
+            })
+        },
         delete: (id: number) => fetch(`${API_BASE_URL}/services/${id}/`, {
             method: 'DELETE',
             headers: getHeaders()

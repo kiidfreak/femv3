@@ -22,6 +22,16 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny] # Refine in production
 
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def recent_members(self, request):
+        """Get recent members with profile pictures for homepage display"""
+        users = User.objects.filter(
+            profile_image_url__isnull=False
+        ).exclude(profile_image_url='').order_by('-date_joined')[:20]
+        
+        serializer = self.get_serializer(users, many=True)
+        return Response(serializer.data)
+
 class BusinessViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Business.objects.select_related('user', 'category').annotate(
@@ -154,6 +164,22 @@ class BusinessViewSet(viewsets.ModelViewSet):
             business.save(update_fields=['view_count'])
             return Response({'status': 'view incremented', 'new_count': business.view_count})
         return Response({'status': 'view count not supported', 'new_count': 0})
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def public_stats(self, request):
+        """Get public platform statistics for homepage"""
+        total_businesses = Business.objects.count()
+        total_members = User.objects.count()
+        verified_count = Business.objects.filter(is_verified=True).count()
+        verified_percentage = round((verified_count / total_businesses * 100)) if total_businesses > 0 else 0
+        avg_rating = Business.objects.aggregate(Avg('rating'))['rating__avg'] or 0
+        
+        return Response({
+            'total_businesses': total_businesses,
+            'total_members': total_members,
+            'verified_percentage': verified_percentage,
+            'avg_rating': round(avg_rating, 1)
+        })
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
