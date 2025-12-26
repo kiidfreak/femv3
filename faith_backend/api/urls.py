@@ -8,6 +8,7 @@ from .views import (
 from .auth_views import PhoneLoginView, SignupView, VerifyOTPView, UpdateProfileView, ResendOTPView
 from .role_views import RoleViewSet, UserRoleViewSet, PermissionViewSet
 from .notification_views import NotificationViewSet, NotificationPreferenceViewSet
+from .campaign_views import CampaignViewSet, MyRewardsViewSet, FeaturedBusinessViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -26,6 +27,11 @@ router.register(r'permissions', PermissionViewSet, basename='permission')
 # Notifications
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'notification-preferences', NotificationPreferenceViewSet, basename='notification-preference')
+
+# Campaigns & Rewards
+router.register(r'campaigns', CampaignViewSet, basename='campaign')
+router.register(r'my-rewards', MyRewardsViewSet, basename='my-rewards')
+router.register(r'featured-businesses', FeaturedBusinessViewSet, basename='featured-businesses')
 
 urlpatterns = [
     # Auth endpoints

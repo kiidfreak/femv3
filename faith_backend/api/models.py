@@ -156,7 +156,7 @@ class PendingUser(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'user_pending_user'
+        db_table = 'pending_user'
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
