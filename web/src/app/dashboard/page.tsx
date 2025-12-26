@@ -28,12 +28,14 @@ function DashboardContent() {
     const router = useRouter()
     const { user, loading: authLoading } = useAuth()
     const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [businessId, setBusinessId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [highlightCatalog, setHighlightCatalog] = useState(false)
 
     useEffect(() => {
         if (user) {
             fetchStats()
+            fetchBusiness()
         }
     }, [user])
 
@@ -88,6 +90,18 @@ function DashboardContent() {
             console.error("Failed to fetch stats:", error)
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const fetchBusiness = async () => {
+        try {
+            const res = await apiClient.businesses.myBusiness()
+            if (res.ok) {
+                const business = await res.json()
+                setBusinessId(business.id)
+            }
+        } catch (error) {
+            console.error("Failed to fetch business:", error)
         }
     }
 
@@ -237,7 +251,7 @@ function DashboardContent() {
                     </Card>
                 </Link>
 
-                <Link href={`/business/${user?.id || 'my'}`} className="block">
+                <Link href={businessId ? `/business/${businessId}` : '#'} className={cn("block", !businessId && "pointer-events-none opacity-50")}>
                     <Card className="border-2 border-blue-100 hover:border-blue-500 hover:shadow-xl transition-all cursor-pointer group h-full">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -257,10 +271,10 @@ function DashboardContent() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: 'Total Views', value: stats.total_views.toLocaleString(), icon: Eye, color: 'text-[#F58220]', bg: 'bg-[#F58220]/10', trend: '+12% from last week' },
-                    { label: 'Likes', value: stats.likes.toLocaleString(), icon: ThumbsUp, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+5% growth' },
-                    { label: 'Church Groups', value: stats.church_groups, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50', trend: 'Community Reach' },
-                    { label: 'Trust Score', value: `${stats.trust_score}/100`, icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50', trend: 'Stable' },
+                    { label: 'Total Views', value: stats.total_views.toLocaleString(), icon: Eye, color: 'text-[#F58220]', bg: 'bg-[#F58220]/10' },
+                    { label: 'Likes', value: stats.likes.toLocaleString(), icon: ThumbsUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Church Groups', value: stats.church_groups, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { label: 'Trust Score', value: `${stats.trust_score}/100`, icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50' },
                 ].map((stat, i) => (
                     <Card key={i} className="border-none shadow-lg hover:shadow-xl transition-shadow">
                         <CardContent className="p-6">
@@ -268,9 +282,6 @@ function DashboardContent() {
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">{stat.label}</p>
                                     <p className="text-3xl font-bold text-[#1A1A1A] mt-1">{stat.value}</p>
-                                    <p className={cn("text-sm font-medium mt-1", stat.trend.includes('+') ? "text-green-600" : "text-gray-500")}>
-                                        {stat.trend}
-                                    </p>
                                 </div>
                                 <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center", stat.bg)}>
                                     <stat.icon className={cn("h-6 w-6", stat.color)} />
