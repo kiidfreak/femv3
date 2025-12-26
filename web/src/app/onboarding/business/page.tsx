@@ -47,7 +47,8 @@ export default function BusinessOnboardingPage() {
         const fetchCategories = async () => {
             try {
                 const data = await apiClient.get('/categories/')
-                setCategories(data)
+                const catList = data.results || (Array.isArray(data) ? data : [])
+                setCategories(catList)
             } catch (error) {
                 console.error("Failed to fetch categories:", error)
             }
