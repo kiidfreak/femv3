@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2 } from "lucide-react"
+import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
@@ -100,25 +100,55 @@ function DashboardContent() {
                     <h1 className="text-4xl font-bold text-[#1A1A1A] tracking-tight">Business Insights</h1>
                     <p className="text-gray-500 mt-2">Manage your business performance and community trust.</p>
                 </div>
-                <div className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border shrink-0 w-fit",
-                    user?.is_verified
-                        ? "bg-green-50 text-green-700 border-green-200"
-                        : "bg-blue-50 text-blue-700 border-blue-200"
-                )}>
-                    {user?.is_verified ? (
-                        <>
-                            <ShieldCheck className="h-4 w-4" />
-                            Church Verified
-                        </>
-                    ) : (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin-slow" />
-                            Verification Pending
-                        </>
-                    )}
-                </div>
+                {user?.has_business_profile && (
+                    <div className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border shrink-0 w-fit",
+                        user?.is_verified
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : "bg-blue-50 text-blue-700 border-blue-200"
+                    )}>
+                        {user?.is_verified ? (
+                            <>
+                                <ShieldCheck className="h-4 w-4" />
+                                Church Verified
+                            </>
+                        ) : (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin-slow" />
+                                Verification Pending
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
+
+            {/* Setup Invitation Banner - Show if no business profile */}
+            {user?.user_type === 'business_owner' && !user.has_business_profile && (
+                <Card className="border-none bg-gradient-to-r from-[#F58220] to-[#D66D18] text-white shadow-xl overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                        <Store className="h-32 w-32" />
+                    </div>
+                    <CardContent className="p-8 relative z-10">
+                        <div className="flex flex-col md:flex-row items-center gap-6">
+                            <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/30 shadow-inner">
+                                <Sparkles className="h-8 w-8 text-white" />
+                            </div>
+                            <div className="flex-1 text-center md:text-left">
+                                <h2 className="text-2xl font-bold mb-2">Ready to grow your business?</h2>
+                                <p className="text-white/80 max-w-xl">
+                                    You haven't set up your business profile yet. Complete your setup now to join the Faith Connect directory,
+                                    showcase your offerings, and earn community trust.
+                                </p>
+                            </div>
+                            <Link href="/onboarding/business">
+                                <Button size="lg" className="bg-white text-[#F58220] hover:bg-gray-100 font-bold px-8 h-14 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+                                    Set Up Your Business Profile <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Quick Actions */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
