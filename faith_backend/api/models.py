@@ -34,6 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_verified = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)  # Email verification status
     phone_verified = models.BooleanField(default=False)  # Phone verification status
+    profile_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='profile_image_url')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,7 +74,8 @@ class Business(models.Model):
     is_active = models.BooleanField(default=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.IntegerField(default=0)
-    # view_count = models.PositiveIntegerField(default=0)
+    business_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_image_url')
+    business_logo_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_logo_url')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,7 +88,7 @@ class Service(models.Model):
     description = models.TextField(blank=True, null=True)
     price_range = models.CharField(max_length=100, blank=True, null=True)
     duration = models.CharField(max_length=100, blank=True, null=True)
-    service_image = models.ImageField(upload_to='services/', db_column='service_image_url', blank=True, null=True)
+    service_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='service_image_url')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -99,7 +101,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_currency = models.CharField(max_length=10, default='KES')
-    product_image = models.ImageField(upload_to='products/', db_column='product_image_url', blank=True, null=True)
+    product_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='product_image_url')
     is_active = models.BooleanField(default=True)
     in_stock = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

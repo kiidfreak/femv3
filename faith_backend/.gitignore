@@ -149,18 +149,22 @@ cython_debug/
 # VS Code
 .vscode/
 
-# Backups
+# Debug and Temporary Files
 backups/
 *.dump
-schema_dump.json
-product_schema.json
+*.sql
+*.txt
+*.json
 schema.py
 schema_utf8.py
-tables.txt
-tables_utf8.txt
-user_schema.json
 test_db.py
 db_analysis.py
 list_tables.py
 dump_user_schema.py
 dump_product_schema.py
+copy_schema.py
+debug_*.py
+remote_*.json
+remote_*.txt
+*.pyc
+__pycache__/

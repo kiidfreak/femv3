@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile']
+        fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile', 'profile_image_url']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,12 +21,12 @@ class CategorySerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'price_range', 'duration', 'service_image', 'is_active']
+        fields = ['id', 'name', 'description', 'price_range', 'duration', 'service_image_url', 'is_active']
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'price_currency', 'product_image', 'is_active', 'in_stock']
+        fields = ['id', 'name', 'description', 'price', 'price_currency', 'product_image_url', 'is_active', 'in_stock']
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -46,7 +46,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'business_name', 'description', 'address', 
             'category', 'category_name', 'owner_name', 'rating', 'review_count',
-            'is_verified', 'product_count', 'service_count'
+            'is_verified', 'product_count', 'service_count', 'business_image_url', 'business_logo_url'
         ]
 
 class BusinessSerializer(serializers.ModelSerializer):
@@ -66,7 +66,7 @@ class BusinessSerializer(serializers.ModelSerializer):
             'id', 'business_name', 'description', 'address', 
             'phone', 'email', 'website',
             'category', 'category_name', 'owner_name', 'rating', 'review_count', 'view_count',
-            'is_verified', 'services', 'products', 'reviews'
+            'is_verified', 'services', 'products', 'reviews', 'business_image_url', 'business_logo_url'
         ]
 
 

@@ -8,10 +8,17 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     MapPin, Star, ShieldCheck, Heart, Share2,
-    Package, Wrench, MessageSquare, Phone, Mail
+    Package, Wrench, MessageSquare, Phone, Mail, Store
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
+import Image from "next/image"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Business {
     id: string
@@ -22,6 +29,8 @@ interface Business {
     is_verified: boolean
     rating: number
     review_count: number
+    business_image_url?: string
+    business_logo_url?: string
     products: Product[]
     services: Service[]
 }
@@ -31,6 +40,7 @@ interface Product {
     name: string
     description: string
     price: string
+    product_image_url?: string
     in_stock: boolean
     is_active: boolean
 }
@@ -41,6 +51,7 @@ interface Service {
     description: string
     price_range: string
     duration: string
+    service_image_url?: string
     is_active: boolean
 }
 
@@ -120,28 +131,62 @@ export default function BusinessDetailPage() {
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12">
             <div className="container max-w-6xl">
-                {/* Hero Section */}
-                <Card className="mb-6 border-none shadow-lg">
+                {/* Hero & Banner Section */}
+                {business.business_image_url && (
+                    <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden mb-6 shadow-md">
+                        <Image
+                            src={business.business_image_url}
+                            alt={`${business.business_name} banner`}
+                            fill
+                            className="object-cover"
+                            priority
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </div>
+                )}
+
+                <Card className="mb-6 border-none shadow-lg overflow-hidden">
                     <CardContent className="p-8">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                             <div className="flex-1">
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="h-16 w-16 rounded-full bg-[#F58220]/10 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-2xl font-bold text-[#F58220]">
-                                            {business.business_name.charAt(0)}
-                                        </span>
+                                <div className="flex items-start gap-4 mb-4">
+                                    <div className="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-sm">
+                                        {business.business_logo_url ? (
+                                            <Image
+                                                src={business.business_logo_url}
+                                                alt={`${business.business_name} logo`}
+                                                fill
+                                                className="object-contain p-2"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center">
+                                                <Store className="h-8 w-8 text-[#F58220] opacity-40 mb-1" />
+                                                <span className="text-2xl font-bold text-[#F58220]">
+                                                    {business.business_name.charAt(0)}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <h1 className="text-3xl font-bold text-gray-900">{business.business_name}</h1>
+                                            <h1 className="text-3xl font-bold text-[#1A1A1A]">{business.business_name}</h1>
                                             {business.is_verified && (
-                                                <ShieldCheck className="h-6 w-6 text-green-600" />
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <ShieldCheck className="h-6 w-6 text-green-600 cursor-help" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Verified Business</TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                             )}
                                         </div>
-                                        <Badge variant="secondary" className="mb-2">
-                                            {business.category_name}
-                                        </Badge>
-                                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                                            <Badge className="bg-[#F58220]/10 text-[#F58220] hover:bg-[#F58220]/20 border-none px-3 py-1">
+                                                {business.category_name}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                             <div className="flex items-center gap-1">
                                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                                 <span className="font-semibold">{business.rating}</span>
@@ -198,17 +243,27 @@ export default function BusinessDetailPage() {
                     <TabsContent value="products">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {business.products?.map((product) => (
-                                <Card key={product.id} className="hover:shadow-lg transition-shadow">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                                <Card key={product.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                                    {product.product_image_url && (
+                                        <div className="relative aspect-video overflow-hidden">
+                                            <Image
+                                                src={product.product_image_url}
+                                                alt={product.name}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    )}
+                                    <CardHeader className="p-4">
+                                        <CardTitle className="text-lg font-bold">{product.name}</CardTitle>
                                     </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-600 mb-4">{product.description}</p>
+                                    <CardContent className="p-4 pt-0">
+                                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                                         <div className="flex items-center justify-between">
                                             <span className="text-xl font-bold text-[#F58220]">
                                                 KES {parseFloat(product.price).toLocaleString()}
                                             </span>
-                                            <Badge variant={product.in_stock ? "default" : "secondary"}>
+                                            <Badge className={product.in_stock ? "bg-green-50 text-green-700 border-green-100" : "bg-gray-100 text-gray-600"}>
                                                 {product.in_stock ? "In Stock" : "Out of Stock"}
                                             </Badge>
                                         </div>
@@ -227,25 +282,38 @@ export default function BusinessDetailPage() {
                     <TabsContent value="services">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {business.services?.map((service) => (
-                                <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{service.name}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-600 mb-4">{service.description}</p>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div>
-                                                <span className="text-gray-500">Price: </span>
-                                                <span className="font-semibold text-[#F58220]">{service.price_range}</span>
-                                            </div>
-                                            {service.duration && (
-                                                <div>
-                                                    <span className="text-gray-500">Duration: </span>
-                                                    <span className="font-semibold">{service.duration}</span>
-                                                </div>
-                                            )}
+                                <Card key={service.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col md:flex-row">
+                                    {service.service_image_url && (
+                                        <div className="relative w-full md:w-1/3 aspect-video md:aspect-square overflow-hidden shrink-0">
+                                            <Image
+                                                src={service.service_image_url}
+                                                alt={service.name}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
                                         </div>
-                                    </CardContent>
+                                    )}
+                                    <div className="flex-1 flex flex-col">
+                                        <CardHeader className="p-4 pb-2">
+                                            <CardTitle className="text-lg font-bold">{service.name}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 pt-0 flex-1">
+                                            <p className="text-sm text-gray-600 mb-4">{service.description}</p>
+                                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm mt-auto">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2.5 py-1 bg-[#F58220]/5 text-[#F58220] rounded-lg font-bold">
+                                                        {service.price_range}
+                                                    </span>
+                                                </div>
+                                                {service.duration && (
+                                                    <div className="flex items-center gap-1.5 text-gray-500 font-medium bg-gray-50 px-2.5 py-1 rounded-lg">
+                                                        <Star className="h-3.5 w-3.5 opacity-40 shrink-0" />
+                                                        <span>{service.duration}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </div>
                                 </Card>
                             ))}
                             {(!business.services || business.services.length === 0) && (

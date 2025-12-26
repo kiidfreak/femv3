@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 export function UserProfileDropdown() {
     const { user, logout } = useAuth()
@@ -67,8 +68,12 @@ export function UserProfileDropdown() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 relative">
-                    <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative shadow-sm border border-[#F58220]/20">
-                        <User className="h-5 w-5 text-[#F58220]" />
+                    <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative shadow-sm border border-[#F58220]/20 overflow-hidden">
+                        {user.profile_image_url ? (
+                            <Image src={user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                        ) : (
+                            <User className="h-5 w-5 text-[#F58220]" />
+                        )}
                         {isOnboarding && (
                             <div className={cn(
                                 "absolute -top-1 -right-1 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center shadow-md",
@@ -99,8 +104,12 @@ export function UserProfileDropdown() {
                 {/* User Info Header */}
                 <div className="p-4 border-b">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="h-12 w-12 rounded-full bg-[#F58220]/10 flex items-center justify-center">
-                            <User className="h-6 w-6 text-[#F58220]" />
+                        <div className="h-12 w-12 rounded-full bg-[#F58220]/10 flex items-center justify-center overflow-hidden relative border border-[#F58220]/20">
+                            {user.profile_image_url ? (
+                                <Image src={user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                            ) : (
+                                <User className="h-6 w-6 text-[#F58220]" />
+                            )}
                         </div>
                         <div className="flex-1">
                             <p className="font-bold text-[#1A1A1A]">{user.first_name || user.phone}</p>

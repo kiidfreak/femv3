@@ -56,7 +56,8 @@ function DirectoryContent() {
                 reviews: biz.review_count || 0,
                 verified: biz.is_verified || false,
                 productCount: biz.product_count || 0,
-                serviceCount: biz.service_count || 0
+                serviceCount: biz.service_count || 0,
+                image: biz.business_image_url || biz.business_logo_url
             }))
 
             setBusinesses(mappedData)
