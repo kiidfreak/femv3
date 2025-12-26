@@ -22,73 +22,91 @@ function DirectoryContent() {
     const [showFilters, setShowFilters] = useState(false)
     const [verifiedOnly, setVerifiedOnly] = useState(false)
     const [highRatingsOnly, setHighRatingsOnly] = useState(false)
+    const [page, setPage] = useState(1)
+    const [totalCount, setTotalCount] = useState(0)
+    const [pageSize, setPageSize] = useState(12)
 
-    useEffect(() => {
-        const fetchBusinesses = async () => {
-            setLoading(true)
-            try {
-                const res = await apiClient.businesses.list('')
-                if (!res.ok) throw new Error('Failed to fetch')
-                const data = await res.json()
-
-                // Map backend data to frontend props
-                const mappedData = data.map((biz: any) => ({
-                    id: biz.id,
-                    name: biz.business_name,
-                    category: biz.category_name || 'Business',
-                    location: biz.address,
-                    rating: parseFloat(biz.rating) || 0,
-                    reviews: biz.review_count || 0,
-                    verified: biz.is_verified || false,
-                    productCount: biz.product_count || 0,
-                    serviceCount: biz.service_count || 0
-                }))
-
-                setBusinesses(mappedData)
-            } catch (error) {
-                console.error("Failed to fetch businesses", error)
-            } finally {
-                setLoading(false)
+    const fetchBusinesses = async () => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams()
+            params.append('page', page.toString())
+            if (searchQuery) params.append('search', searchQuery)
+            if (selectedCategory !== 'All') {
+                const cat = categories.find(c => c.name === selectedCategory)
+                if (cat) params.append('category', cat.id.toString())
             }
+            if (verifiedOnly) params.append('is_verified', 'true')
+            // Note: highRatingsOnly is still client-side unless backend supports min_rating
+
+            const res = await apiClient.businesses.list(params.toString())
+            if (!res.ok) throw new Error('Failed to fetch')
+            const data = await res.json()
+
+            // Handle paginated response structure
+            const results = data.results || (Array.isArray(data) ? data : [])
+            setTotalCount(data.count || results.length)
+
+            const mappedData = results.map((biz: any) => ({
+                id: biz.id,
+                name: biz.business_name,
+                category: biz.category_name || 'Business',
+                location: biz.address,
+                rating: parseFloat(biz.rating) || 0,
+                reviews: biz.review_count || 0,
+                verified: biz.is_verified || false,
+                productCount: biz.product_count || 0,
+                serviceCount: biz.service_count || 0
+            }))
+
+            setBusinesses(mappedData)
+        } catch (error) {
+            console.error("Failed to fetch businesses", error)
+        } finally {
+            setLoading(false)
         }
+    }
 
-        const fetchCategories = async () => {
-            try {
-                const res = await apiClient.categories.list()
-                if (res.ok) {
-                    const data = await res.json()
-                    setCategories(data)
+    const fetchCategories = async () => {
+        try {
+            const res = await apiClient.categories.list()
+            if (res.ok) {
+                const data = await res.json()
+                setCategories(data)
 
-                    // Handle URL param after categories are loaded
-                    const paramId = searchParams.get('category')
-                    if (paramId) {
-                        const numericId = parseInt(paramId)
-                        const found = data.find((c: any) => c.id === numericId)
-                        if (found) {
-                            setSelectedCategory(found.name)
-                        }
+                const paramId = searchParams.get('category')
+                if (paramId) {
+                    const numericId = parseInt(paramId)
+                    const found = data.find((c: any) => c.id === numericId)
+                    if (found) {
+                        setSelectedCategory(found.name)
                     }
                 }
-            } catch (error) {
-                console.error("Failed to fetch categories", error)
             }
+        } catch (error) {
+            console.error("Failed to fetch categories", error)
         }
+    }
 
-        fetchBusinesses()
+    useEffect(() => {
         fetchCategories()
     }, [])
 
-    const filteredBusinesses = businesses.filter(biz => {
-        const matchesSearch = biz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            biz.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            biz.location.toLowerCase().includes(searchQuery.toLowerCase())
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchBusinesses()
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [page, searchQuery, selectedCategory, verifiedOnly])
 
-        const matchesCategory = selectedCategory === "All" || biz.category === selectedCategory
-        const matchesVerified = !verifiedOnly || biz.verified
-        const matchesRating = !highRatingsOnly || biz.rating >= 4.0
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setPage(1)
+    }, [searchQuery, selectedCategory, verifiedOnly])
 
-        return matchesSearch && matchesCategory && matchesVerified && matchesRating
-    })
+    const filteredBusinesses = highRatingsOnly
+        ? businesses.filter(biz => biz.rating >= 4.0)
+        : businesses
 
     return (
         <div className="container py-12">
@@ -197,6 +215,64 @@ function DirectoryContent() {
                         <BusinessCard key={biz.id} {...biz} />
                     ))
                 )}
+            </div>
+
+            {/* Pagination UI */}
+            {!loading && totalCount > pageSize && (
+                <div className="mt-12 flex items-center justify-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="rounded-xl border-gray-200"
+                    >
+                        Previous
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.ceil(totalCount / pageSize) }).map((_, i) => {
+                            const pageNum = i + 1;
+                            // Show limited numbers if too many
+                            if (
+                                pageNum === 1 ||
+                                pageNum === Math.ceil(totalCount / pageSize) ||
+                                (pageNum >= page - 1 && pageNum <= page + 1)
+                            ) {
+                                return (
+                                    <Button
+                                        key={pageNum}
+                                        variant={page === pageNum ? "default" : "outline"}
+                                        onClick={() => setPage(pageNum)}
+                                        className={page === pageNum
+                                            ? "bg-[#F58220] hover:bg-[#D66D18] w-10 h-10 rounded-xl"
+                                            : "border-gray-200 w-10 h-10 rounded-xl"}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                );
+                            } else if (
+                                pageNum === page - 2 ||
+                                pageNum === page + 2
+                            ) {
+                                return <span key={pageNum} className="px-1 shadow-none">...</span>;
+                            }
+                            return null;
+                        })}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => setPage(p => p + 1)}
+                        disabled={page >= Math.ceil(totalCount / pageSize)}
+                        className="rounded-xl border-gray-200"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
+
+            <div className="mt-8 text-center text-sm text-gray-500 font-medium">
+                Showing {businesses.length} of {totalCount} businesses
             </div>
         </div>
     )
