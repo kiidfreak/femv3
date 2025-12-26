@@ -75,6 +75,7 @@ export const apiClient = {
 
     // 3. Offerings (Products & Services)
     products: {
+        list: (params?: string) => fetch(`${API_BASE_URL}/products/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
         save: (data: any) => fetch(`${API_BASE_URL}/products/${data.id ? `${data.id}/` : ''}`, {
             method: data.id ? 'PATCH' : 'POST',
             headers: getHeaders(),
@@ -86,6 +87,7 @@ export const apiClient = {
         }),
     },
     services: {
+        list: (params?: string) => fetch(`${API_BASE_URL}/services/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
         save: (data: any) => fetch(`${API_BASE_URL}/services/${data.id ? `${data.id}/` : ''}`, {
             method: data.id ? 'PATCH' : 'POST',
             headers: getHeaders(),
@@ -97,8 +99,17 @@ export const apiClient = {
         }),
     },
 
-    // 4. Media (Token-Based)
-    // 4. Media (Token-Based)
+    // 5. Reviews
+    reviews: {
+        list: (params?: string) => fetch(`${API_BASE_URL}/reviews/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
+        save: (data: any) => fetch(`${API_BASE_URL}/reviews/${data.id ? `${data.id}/` : ''}`, {
+            method: data.id ? 'PATCH' : 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }),
+    },
+
+    // 6. Media (Token-Based)
     media: {
         getUploadToken: (file: File) => fetch(`${API_BASE_URL}/media/upload-token`, {
             method: 'POST',

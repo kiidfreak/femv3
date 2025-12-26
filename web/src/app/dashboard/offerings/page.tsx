@@ -178,7 +178,11 @@ export default function ManageOfferingsPage() {
                                 Fill in the details below to add a new {activeTab === "products" ? "product" : "service"} to your catalog
                             </DialogDescription>
                         </DialogHeader>
-                        <AddOfferingForm type={activeTab} onClose={() => setIsAddDialogOpen(false)} />
+                        <AddOfferingForm
+                            type={activeTab}
+                            onClose={() => setIsAddDialogOpen(false)}
+                            onSuccess={fetchBusinessData}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>
@@ -265,7 +269,7 @@ export default function ManageOfferingsPage() {
             {activeTab === "products" && (
                 <div className="space-y-4">
                     {filteredProducts.length === 0 ? (
-                        <EmptyState type="products" />
+                        <EmptyState type="products" onAdd={() => setIsAddDialogOpen(true)} />
                     ) : (
                         filteredProducts.map((product) => (
                             <ProductCard
@@ -282,7 +286,7 @@ export default function ManageOfferingsPage() {
             {activeTab === "services" && (
                 <div className="space-y-4">
                     {filteredServices.length === 0 ? (
-                        <EmptyState type="services" />
+                        <EmptyState type="services" onAdd={() => setIsAddDialogOpen(true)} />
                     ) : (
                         filteredServices.map((service) => (
                             <ServiceCard
@@ -419,7 +423,7 @@ function ServiceCard({ service, onToggleStatus }: { service: Service; onToggleSt
     )
 }
 
-function EmptyState({ type }: { type: string }) {
+function EmptyState({ type, onAdd }: { type: string; onAdd: () => void }) {
     return (
         <Card className="border-2 border-dashed border-gray-300">
             <CardContent className="p-12 text-center">
@@ -432,7 +436,7 @@ function EmptyState({ type }: { type: string }) {
                 </div>
                 <h3 className="text-xl font-bold text-gray-700 mb-2">No {type} yet</h3>
                 <p className="text-gray-500 mb-6">Get started by adding your first {type === "products" ? "product" : "service"}</p>
-                <Button className="bg-[#F58220] hover:bg-[#D66D18] text-white">
+                <Button onClick={onAdd} className="bg-[#F58220] hover:bg-[#D66D18] text-white">
                     <Plus className="mr-2 h-4 w-4" />
                     Add {type === "products" ? "Product" : "Service"}
                 </Button>
@@ -441,51 +445,125 @@ function EmptyState({ type }: { type: string }) {
     )
 }
 
-function AddOfferingForm({ type, onClose }: { type: "products" | "services"; onClose: () => void }) {
+function AddOfferingForm({ type, onClose, onSuccess }: { type: "products" | "services"; onClose: () => void; onSuccess: () => void }) {
     const [isLoading, setIsLoading] = useState(false)
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        price: "",
+        price_currency: "KES",
+        price_range: "",
+        duration: ""
+    })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!formData.name) {
+            toast.error("Name is required")
+            return
+        }
+
         setIsLoading(true)
-        // TODO: API call
-        setTimeout(() => {
+        try {
+            const payload = type === "products" ? {
+                name: formData.name,
+                description: formData.description,
+                price: parseFloat(formData.price) || 0,
+                price_currency: formData.price_currency,
+                is_active: true,
+                in_stock: true
+            } : {
+                name: formData.name,
+                description: formData.description,
+                price_range: formData.price_range,
+                duration: formData.duration,
+                is_active: true
+            }
+
+            const res = await (type === "products"
+                ? apiClient.products.save(payload)
+                : apiClient.services.save(payload))
+
+            if (res.ok) {
+                toast.success(`${type === "products" ? "Product" : "Service"} added successfully!`)
+                onSuccess()
+                onClose()
+            } else {
+                const errorData = await res.json()
+                toast.error(errorData.error || `Failed to add ${type}`)
+            }
+        } catch (error) {
+            console.error("Failed to add offering:", error)
+            toast.error("An error occurred. Please try again.")
+        } finally {
             setIsLoading(false)
-            onClose()
-        }, 1000)
+        }
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
             <div className="space-y-2">
-                <Label>Name</Label>
-                <Input placeholder={type === "products" ? "e.g. Holy Bible" : "e.g. Wedding Photography"} className="h-12" />
+                <Label>Name *</Label>
+                <Input
+                    placeholder={type === "products" ? "e.g. Holy Bible" : "e.g. Wedding Photography"}
+                    className="h-12"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                />
             </div>
 
             <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea placeholder="Describe your offering..." className="min-h-24" />
+                <Textarea
+                    placeholder="Describe your offering..."
+                    className="min-h-24"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
             </div>
 
             {type === "products" ? (
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Price</Label>
-                        <Input type="number" placeholder="2500" className="h-12" />
+                        <Input
+                            type="number"
+                            placeholder="2500"
+                            className="h-12"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Currency</Label>
-                        <Input placeholder="KES" className="h-12" defaultValue="KES" />
+                        <Input
+                            placeholder="KES"
+                            className="h-12"
+                            value={formData.price_currency}
+                            onChange={(e) => setFormData({ ...formData, price_currency: e.target.value })}
+                        />
                     </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Price Range</Label>
-                        <Input placeholder="KES 10,000 - 50,000" className="h-12" />
+                        <Input
+                            placeholder="KES 10,000 - 50,000"
+                            className="h-12"
+                            value={formData.price_range}
+                            onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Duration</Label>
-                        <Input placeholder="2 hours" className="h-12" />
+                        <Input
+                            placeholder="2 hours"
+                            className="h-12"
+                            value={formData.duration}
+                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        />
                     </div>
                 </div>
             )}

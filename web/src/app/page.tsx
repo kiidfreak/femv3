@@ -20,7 +20,8 @@ import {
   Users,
   ShieldCheck,
   Building2,
-  ArrowRight
+  ArrowRight,
+  Package
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -54,26 +55,45 @@ const iconMap: Record<string, any> = {
   'agriculture': HomeIcon,
 };
 
+import { OfferingCard } from "@/components/directory/OfferingCard";
+
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [featuredOfferings, setFeaturedOfferings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const res = await apiClient.categories.list();
-        if (res.ok) {
-          const data = await res.json();
+        const [catRes, prodRes, servRes] = await Promise.all([
+          apiClient.categories.list(),
+          apiClient.products.list("limit=4"),
+          apiClient.services.list("limit=4")
+        ]);
+
+        if (catRes.ok) {
+          const data = await catRes.json();
           setCategories(data);
         }
+
+        const prods = prodRes.ok ? (await prodRes.json()).results : [];
+        const servs = servRes.ok ? (await servRes.json()).results : [];
+
+        // Combine and limit to 4 items total for teaser
+        const combined = [
+          ...prods.map((p: any) => ({ ...p, type: 'product' })),
+          ...servs.map((s: any) => ({ ...s, type: 'service' }))
+        ].slice(0, 4);
+
+        setFeaturedOfferings(combined);
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCategories();
+    fetchData();
   }, []);
 
   return (
@@ -134,20 +154,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products / Services Teaser (Optional based on "Some Products & Services" request) */}
-      <section className="bg-gray-50 py-20">
+      {/* Featured Products / Services Teaser */}
+      <section className="bg-gray-50 py-24">
         <div className="container">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold text-[#1A1A1A] mb-4">Some Products & Services</h2>
-            <p className="text-gray-600">
-              Discover quality products and professional services from our community businesses.
-            </p>
-          </div>
-          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500 italic">No products or services available yet. Be the first to add yours!</p>
-            <Link href="/auth/signup" className="mt-4 inline-block">
-              <Button variant="link" className="text-[#F58220]">List your products now</Button>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-bold mb-4">
+                <Package className="h-4 w-4" />
+                Latest Community Offerings
+              </div>
+              <h2 className="text-4xl font-black text-[#1A1A1A]">Featured Products & Services</h2>
+              <p className="text-gray-600 mt-4 text-lg">
+                Discover quality products and professional services from our community businesses. Supporting each other helps us all grow.
+              </p>
+            </div>
+            <Link href="/directory?view=offerings">
+              <Button variant="outline" className="border-gray-200 h-12 px-6 rounded-xl font-bold hover:bg-white hover:border-[#F58220] hover:text-[#F58220] transition-all">
+                View All Offerings <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {isLoading ? (
+              [1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="aspect-[4/3] rounded-2xl" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))
+            ) : featuredOfferings.length > 0 ? (
+              featuredOfferings.map((offering) => (
+                <div key={`${offering.type}-${offering.id}`} className="animate-fade-in-up">
+                  <OfferingCard
+                    id={offering.id}
+                    businessId={offering.business}
+                    businessName={offering.business_name || "Community Business"}
+                    name={offering.name}
+                    description={offering.description}
+                    type={offering.type}
+                    price={offering.price}
+                    priceCurrency={offering.price_currency}
+                    priceRange={offering.price_range}
+                    duration={offering.duration}
+                    image={offering.image_url}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-gray-300">
+                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium italic text-lg">No products or services available yet.</p>
+                <Link href="/auth/signup" className="mt-6 inline-block">
+                  <Button className="bg-[#F58220] hover:bg-[#D66D18] text-white font-bold h-12 px-8 rounded-xl shadow-lg">
+                    List your products now
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -173,19 +238,19 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="p-4 border-l-4 border-[#F58220]">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">0+</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">70+</div>
                   <div className="text-gray-600">Local Businesses</div>
                 </div>
                 <div className="p-4 border-l-4 border-gray-200">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">0+</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">2,500+</div>
                   <div className="text-gray-600">Community Members</div>
                 </div>
                 <div className="p-4 border-l-4 border-gray-200">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">0%</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">85%</div>
                   <div className="text-gray-600">Verified Businesses</div>
                 </div>
                 <div className="p-4 border-l-4 border-[#F58220]">
-                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">0.0</div>
+                  <div className="text-4xl font-bold text-[#1A1A1A] mb-1">4.8</div>
                   <div className="text-gray-600">Average Rating</div>
                 </div>
               </div>

@@ -114,21 +114,21 @@ export default function BusinessOnboardingPage() {
                 address: `${businessData.address}, ${businessData.city}, ${businessData.county}`,
             }
 
-            await apiClient.businesses.save(payload)
+            const res = await apiClient.businesses.save(payload)
 
-            // Update local user state to reflect they now have a business
-            updateUser({ has_business_profile: true })
-
-            toast.success("Business profile created successfully!")
-            router.push("/dashboard?highlight=catalog")
+            if (res.ok) {
+                // Update local user state to reflect they now have a business
+                updateUser({ has_business_profile: true })
+                toast.success("Business profile created successfully!")
+                router.push("/dashboard?highlight=catalog")
+            } else {
+                const errorData = await res.json()
+                const errorMessage = errorData.error || errorData.detail || "Failed to create business profile"
+                toast.error(errorMessage)
+            }
         } catch (error: any) {
             console.error("Failed to create business:", error)
-            // Handle "Phone number already registered" if backend throws it
-            if (error.message?.includes("already registered") || error.message?.includes("phone")) {
-                toast.error("This phone number is already registered to another business.")
-            } else {
-                toast.error(error.message || "Failed to create business. Please try again.")
-            }
+            toast.error("An unexpected error occurred. Please check your connection.")
         } finally {
             setIsLoading(false)
         }

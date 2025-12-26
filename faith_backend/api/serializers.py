@@ -14,19 +14,28 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile', 'profile_image_url']
 
 class CategorySerializer(serializers.ModelSerializer):
+    business_count = serializers.IntegerField(read_only=True)
+    offering_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'business_count', 'offering_count']
 
 class ServiceSerializer(serializers.ModelSerializer):
+    business_name = serializers.CharField(source='business.business_name', read_only=True)
+    
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'price_range', 'duration', 'service_image_url', 'is_active']
+        fields = ['id', 'business', 'business_name', 'name', 'description', 'price_range', 'duration', 'service_image_url', 'is_active']
+        read_only_fields = ['business']
 
 class ProductSerializer(serializers.ModelSerializer):
+    business_name = serializers.CharField(source='business.business_name', read_only=True)
+    
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'price_currency', 'product_image_url', 'is_active', 'in_stock']
+        fields = ['id', 'business', 'business_name', 'name', 'description', 'price', 'price_currency', 'product_image_url', 'is_active', 'in_stock']
+        read_only_fields = ['business']
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -38,14 +47,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 class BusinessListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     owner_name = serializers.CharField(source='user.first_name', read_only=True)
-    product_count = serializers.SerializerMethodField()
-    service_count = serializers.SerializerMethodField()
-    
-    def get_product_count(self, obj):
-        return obj.products.count()
-
-    def get_service_count(self, obj):
-        return obj.services.count()
+    product_count = serializers.IntegerField(source='products_count_annotated', read_only=True)
+    service_count = serializers.IntegerField(source='services_count_annotated', read_only=True)
     
     class Meta:
         model = Business

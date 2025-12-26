@@ -19,6 +19,8 @@ interface DashboardStats {
     trust_breakdown: any[];
     daily_views: number[];
     referral_sources: any[];
+    products_count: number;
+    services_count: number;
 }
 
 function DashboardContent() {
@@ -48,14 +50,20 @@ function DashboardContent() {
             if (res.ok) {
                 const data = await res.json()
                 setStats(data)
+
+                // Auto-highlight catalog if no products/services
+                if (data.products_count === 0 && data.services_count === 0) {
+                    setHighlightCatalog(true)
+                }
             } else {
                 // Return default empty stats on error or 404
-                // This prevents the white page
                 setStats({
                     total_views: 0,
                     likes: 0,
                     church_groups: 0,
                     trust_score: 0,
+                    products_count: 0,
+                    services_count: 0,
                     trust_breakdown: [
                         { label: 'Church Verification', score: 0, max: 40, status: 'Pending', color: 'bg-gray-300' },
                         { label: 'Profile Completeness', score: 0, max: 20, status: 'Low', color: 'bg-gray-300' },
@@ -67,8 +75,13 @@ function DashboardContent() {
                         { source: 'Direct', percentage: 0, color: '#F58220' }
                     ]
                 })
-                if (res.status === 404) {
-                    // No toast here, we show the onboarding banner in the UI instead
+
+                // Auto-highlight catalog if business exists but has no offerings
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.products_count === 0 && data.services_count === 0) {
+                        setHighlightCatalog(true)
+                    }
                 }
             }
         } catch (error) {

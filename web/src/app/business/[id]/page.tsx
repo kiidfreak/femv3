@@ -14,11 +14,16 @@ import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
 import Image from "next/image"
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/lib/auth"
+import { Label } from "@/components/ui/label"
 
 interface Business {
     id: string
@@ -55,28 +60,45 @@ interface Service {
     is_active: boolean
 }
 
+interface Review {
+    id: number
+    user_name: string
+    rating: number
+    review_text: string
+    created_at: string
+    is_verified: boolean
+}
+
 export default function BusinessDetailPage() {
     const params = useParams()
     const [business, setBusiness] = useState<Business | null>(null)
+    const [reviews, setReviews] = useState<Review[]>([])
     const [loading, setLoading] = useState(true)
     const [isFavorite, setIsFavorite] = useState(false)
+    const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false)
+    const { user } = useAuth()
 
     useEffect(() => {
         const fetchBusiness = async () => {
             try {
-                const res = await apiClient.businesses.get(params.id as string)
-                if (res.ok) {
-                    const data = await res.json()
-                    setBusiness(data)
+                const [bizRes, revRes] = await Promise.all([
+                    apiClient.businesses.get(params.id as string),
+                    apiClient.reviews.list(`business_id=${params.id}`)
+                ])
 
+                if (bizRes.ok) {
+                    const data = await bizRes.json()
+                    setBusiness(data)
                     // Increment view count
                     apiClient.businesses.incrementView(params.id as string).catch(console.error)
-                } else {
-                    toast.error("Business not found")
+                }
+
+                if (revRes.ok) {
+                    const revData = await revRes.json()
+                    setReviews(revData.results || revData)
                 }
             } catch (error) {
                 console.error("Failed to fetch business:", error)
-                toast.error("An error occurred")
             } finally {
                 setLoading(false)
             }
@@ -326,23 +348,169 @@ export default function BusinessDetailPage() {
 
                     {/* Reviews Tab */}
                     <TabsContent value="reviews">
-                        <Card>
-                            <CardContent className="p-8">
-                                <div className="text-center py-12">
-                                    <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Reviews Coming Soon</h3>
-                                    <p className="text-gray-500 mb-6">
-                                        Review functionality will be available soon. Stay tuned!
-                                    </p>
-                                    <Button className="bg-[#F58220] hover:bg-[#D66D18]">
-                                        Be the First to Review
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold">Community Reviews</h3>
+                                <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button className="bg-[#F58220] hover:bg-[#D66D18]">
+                                            Write a Review
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Share your experience</DialogTitle>
+                                            <DialogDescription>
+                                                Your review helps others in the community discover great businesses.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <ReviewForm
+                                            businessId={params.id as string}
+                                            onSuccess={() => {
+                                                setIsReviewDialogOpen(false)
+                                                // Refresh reviews
+                                                apiClient.reviews.list(`business_id=${params.id}`)
+                                                    .then(res => res.json())
+                                                    .then(data => setReviews(data.results || data))
+                                            }}
+                                        />
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+
+                            <div className="grid gap-4">
+                                {reviews.length > 0 ? (
+                                    reviews.map((review) => (
+                                        <Card key={review.id} className="border-gray-100">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-10 h-10 rounded-full bg-[#F58220]/10 flex items-center justify-center font-bold text-[#F58220]">
+                                                            {review.user_name?.charAt(0) || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-sm">{review.user_name}</div>
+                                                            <div className="text-xs text-gray-500">
+                                                                {new Date(review.created_at).toLocaleDateString()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Star
+                                                                key={i}
+                                                                className={cn(
+                                                                    "h-4 w-4",
+                                                                    i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"
+                                                                )}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <p className="text-gray-600 italic">"{review.review_text}"</p>
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-100">
+                                        <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet</h3>
+                                        <p className="text-gray-500 mb-6">Be the first to share your experience with {business.business_name}.</p>
+                                        <Button
+                                            onClick={() => setIsReviewDialogOpen(true)}
+                                            variant="outline"
+                                            className="border-[#F58220] text-[#F58220] hover:bg-[#F58220]/5"
+                                        >
+                                            Write the First Review
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
         </div>
+    )
+}
+
+function ReviewForm({ businessId, onSuccess }: { businessId: string; onSuccess: () => void }) {
+    const [rating, setRating] = useState(5)
+    const [comment, setComment] = useState("")
+    const [loading, setLoading] = useState(false)
+    const { user } = useAuth()
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!user) {
+            toast.error("Please login to write a review")
+            return
+        }
+
+        setLoading(true)
+        try {
+            const res = await apiClient.reviews.save({
+                business: businessId,
+                rating,
+                review_text: comment
+            })
+
+            if (res.ok) {
+                toast.success("Review submitted! Thank you for your feedback.")
+                onSuccess()
+            } else {
+                const errorData = await res.json()
+                toast.error(errorData.error || "Failed to submit review")
+            }
+        } catch (error) {
+            toast.error("An error occurred. Please try again.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            <div className="space-y-2 text-center">
+                <Label className="text-base">Your Rating</Label>
+                <div className="flex justify-center gap-2 py-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            className="transition-transform hover:scale-125 focus:outline-none"
+                        >
+                            <Star
+                                className={cn(
+                                    "h-8 w-8 transition-colors",
+                                    star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"
+                                )}
+                            />
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="comment">Your Experience</Label>
+                <Textarea
+                    id="comment"
+                    placeholder="Tell others what you think..."
+                    className="min-h-[120px]"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    required
+                />
+            </div>
+
+            <Button
+                type="submit"
+                className="w-full bg-[#F58220] hover:bg-[#D66D18] h-12 text-lg font-bold"
+                disabled={loading}
+            >
+                {loading ? "Submitting..." : "Submit Review"}
+            </Button>
+        </form>
     )
 }
