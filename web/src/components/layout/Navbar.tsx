@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Menu, X, Home, Store, Info, PhoneCall, LayoutDashboard } from "lucide-react"
+import { Menu, X, Home, Store, Info, PhoneCall, Package } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
-    ...(user?.user_type === "business_owner" ? [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] : []),
+    ...(user?.user_type === "business_owner" ? [{ href: "/dashboard/offerings", label: "Offerings", icon: Package }] : []),
     { href: "/directory", label: "Directory", icon: Store },
     { href: "/about", label: "About", icon: Info },
     { href: "/contact", label: "Contact", icon: PhoneCall },

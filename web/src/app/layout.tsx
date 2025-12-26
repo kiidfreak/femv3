@@ -34,7 +34,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Navbar />
-          <main className="pt-16 min-h-screen">{children}</main>
+          <main className="pt-24 min-h-screen">{children}</main>
           <Footer />
           <ScrollToTop />
           <Toaster position="top-center" richColors />
