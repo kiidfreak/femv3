@@ -133,6 +133,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.annotate(business_count=Count('businesses')).order_by('-business_count')
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 class ServiceViewSet(viewsets.ModelViewSet):
     queryset = Service.objects.all()

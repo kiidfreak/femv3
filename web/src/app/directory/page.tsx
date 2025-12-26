@@ -73,12 +73,13 @@ function DirectoryContent() {
             const res = await apiClient.categories.list()
             if (res.ok) {
                 const data = await res.json()
-                setCategories(data)
+                const catList = data.results || (Array.isArray(data) ? data : [])
+                setCategories(catList)
 
                 const paramId = searchParams.get('category')
                 if (paramId) {
                     const numericId = parseInt(paramId)
-                    const found = data.find((c: any) => c.id === numericId)
+                    const found = catList.find((c: any) => c.id === numericId)
                     if (found) {
                         setSelectedCategory(found.name)
                     }
