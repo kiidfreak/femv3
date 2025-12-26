@@ -171,3 +171,4 @@ class Favorite(models.Model):
 # Import Role and UserRole models for Django to discover them
 from .roles import Role, UserRole
 from .notification_models import Notification, NotificationPreference
+from .analytics_models import PageView

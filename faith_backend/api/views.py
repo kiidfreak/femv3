@@ -5,6 +5,8 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count, Avg, Case, When, Value, IntegerField
+from django.utils import timezone
+from datetime import timedelta
 from .models import User, Business, Category, Service, Product, Review, Favorite
 from .serializers import (
     UserSerializer, BusinessSerializer, BusinessListSerializer, CategorySerializer,
@@ -133,9 +135,56 @@ class BusinessViewSet(viewsets.ModelViewSet):
         
         trust_score = church_verification + profile_score + reviews_score + age_score
         
+        # Real Analytics from PageView model
+        from api.analytics_models import PageView
+        
+        # Total views from PageView table
+        total_views = business.page_views.count()
+        
+        # Likes = Favorites count
+        likes_count = business.favorited_by.count()
+        
+        # Daily views for last 7 days
+        seven_days_ago = timezone.now() -timedelta(days=7)
+        daily_views = []
+        for i in range(7):
+            day_start = seven_days_ago + timedelta(days=i)
+            day_end = day_start + timedelta(days=1)
+            views_count = business.page_views.filter(
+                viewed_at__gte=day_start,
+                viewed_at__lt=day_end
+            ).count()
+            daily_views.append(views_count)
+        
+        # Referral sources aggregation
+        referral_data = business.page_views.values('referrer_source').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        # Calculate percentages
+        total_refs = sum(item['count'] for item in referral_data) or 1
+        referral_sources = []
+        colors = {
+            'Direct': '#F58220',
+            'Google': '#EA4335',
+            'Facebook': '#1877F2',
+            'Internal': '#3B82F6',
+            'WhatsApp': '#25D366',
+            'Other': '#8B5CF6'
+        }
+        
+        for item in referral_data[:5]:  # Top 5 sources
+            source = item['referrer_source'] or 'Unknown'
+            percentage = round((item['count'] / total_refs) * 100)
+            referral_sources.append({
+                'source': source,
+                'percentage': percentage,
+                'color': colors.get(source, '#6B7280')
+            })
+        
         return Response({
-            'total_views': getattr(business, 'view_count', 0),
-            'likes': int(getattr(business, 'view_count', 0) * 0.05), # Estimated likes (5% of views)
+            'total_views': total_views,
+            'likes': likes_count,
             'church_groups': 12, # Placeholder for now
             'trust_score': round(trust_score),
             'products_count': getattr(business, 'prod_count', 0),
@@ -146,24 +195,43 @@ class BusinessViewSet(viewsets.ModelViewSet):
                 {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Good' if reviews_score > 15 else 'Developing', 'color': 'bg-yellow-500'},
                 {'label': 'Account Age', 'score': age_score, 'max': 15, 'status': 'Stable Member', 'color': 'bg-purple-500'},
             ],
-            'daily_views': [max(0, int(getattr(business, 'view_count', 0) / 7) + i * 10) for i in range(7)], # Distributed views
-            'referral_sources': [
-                {'source': 'Direct Search', 'percentage': 45, 'color': '#F58220'},
-                {'source': 'Church Network', 'percentage': 35, 'color': '#3B82F6'},
-                {'source': 'Social Media', 'percentage': 15, 'color': '#10B981'},
-                {'source': 'Word of Mouth', 'percentage': 5, 'color': '#8B5CF6'},
-            ]
+            'daily_views': daily_views,
+            'referral_sources': referral_sources if referral_sources else [{'source': 'Direct', 'percentage': 100, 'color': '#F58220'}]
         })
 
     @action(detail=True, methods=['post'])
     def increment_view(self, request, pk=None):
-        """Increment the view count for a business"""
+        """Log detailed page view for analytics"""
+        from api.analytics_models import PageView
+        
         business = self.get_object()
+        
+        # Get referrer and categorize
+        referrer = request.META.get('HTTP_REFERER', '')
+        referrer_source = PageView.categorize_referrer(referrer)
+        
+        # Get session/user info
+        user = request.user if request.user.is_authenticated else None
+        session_id = request.session.session_key if hasattr(request, 'session') else None
+        
+        # Log the page view
+        PageView.objects.create(
+            business=business,
+            user=user,
+            session_id=session_id,
+            referrer=referrer[:500] if referrer else None,
+            referrer_source=referrer_source,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        # Also increment simple counter if exists
         if hasattr(business, 'view_count'):
-            business.view_count += 1
+            business.view_count = (business.view_count or 0) + 1
             business.save(update_fields=['view_count'])
-            return Response({'status': 'view incremented', 'new_count': business.view_count})
-        return Response({'status': 'view count not supported', 'new_count': 0})
+        
+        total_views = business.page_views.count()
+        return Response({'status': 'view logged', 'total_views': total_views})
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def public_stats(self, request):
