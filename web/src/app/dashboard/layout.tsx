@@ -41,5 +41,9 @@ export default function DashboardLayout({
         return null
     }
 
-    return <>{children}</>
+    return (
+        <div className="container py-8">
+            {children}
+        </div>
+    )
 }
