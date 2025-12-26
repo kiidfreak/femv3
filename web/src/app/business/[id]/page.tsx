@@ -11,7 +11,7 @@ import {
     Package, Wrench, MessageSquare, Phone, Mail, Store
 } from "lucide-react"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
+import { apiClient, getImageUrl } from "@/lib/api-client"
 import Image from "next/image"
 import {
     Dialog,
@@ -115,6 +115,12 @@ export default function BusinessDetailPage() {
         }
     }, [params.id])
 
+    useEffect(() => {
+        if (business) {
+            setIsFavorite(business.is_favorite)
+        }
+    }, [business])
+
     const handleShare = () => {
         const url = window.location.href
         if (navigator.share) {
@@ -129,9 +135,31 @@ export default function BusinessDetailPage() {
         }
     }
 
-    const toggleFavorite = () => {
-        setIsFavorite(!isFavorite)
-        toast.success(isFavorite ? "Removed from favorites" : "Added to favorites")
+    const toggleFavorite = async () => {
+        if (!user) {
+            toast.error("Please login to save items", {
+                description: "Create an account to save your favorite offerings."
+            })
+            return
+        }
+
+        try {
+            const newStatus = !isFavorite
+            setIsFavorite(newStatus)
+
+            const res = await apiClient.favorites.toggle({ business: business?.id })
+            if (res.ok) {
+                const data = await res.json()
+                setIsFavorite(data.is_favorite)
+                toast.success(data.is_favorite ? "Added to favorites" : "Removed from favorites")
+            } else {
+                setIsFavorite(!newStatus)
+                toast.error("Failed to update favorites")
+            }
+        } catch (error) {
+            setIsFavorite(isFavorite)
+            toast.error("An error occurred")
+        }
     }
 
     if (loading) {
@@ -163,7 +191,7 @@ export default function BusinessDetailPage() {
                 {business.business_image_url && (
                     <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden mb-6 shadow-md">
                         <Image
-                            src={business.business_image_url}
+                            src={getImageUrl(business.business_image_url) || business.business_image_url}
                             alt={`${business.business_name} banner`}
                             fill
                             className="object-cover"
@@ -181,7 +209,7 @@ export default function BusinessDetailPage() {
                                     <div className="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-sm">
                                         {business.business_logo_url ? (
                                             <Image
-                                                src={business.business_logo_url}
+                                                src={getImageUrl(business.business_logo_url) || business.business_logo_url}
                                                 alt={`${business.business_name} logo`}
                                                 fill
                                                 className="object-contain p-2"
@@ -275,7 +303,7 @@ export default function BusinessDetailPage() {
                                     {product.product_image_url && (
                                         <div className="relative aspect-video overflow-hidden">
                                             <Image
-                                                src={product.product_image_url}
+                                                src={getImageUrl(product.product_image_url) || product.product_image_url}
                                                 alt={product.name}
                                                 fill
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -314,7 +342,7 @@ export default function BusinessDetailPage() {
                                     {service.service_image_url && (
                                         <div className="relative w-full md:w-1/3 aspect-video md:aspect-square overflow-hidden shrink-0">
                                             <Image
-                                                src={service.service_image_url}
+                                                src={getImageUrl(service.service_image_url) || service.service_image_url}
                                                 alt={service.name}
                                                 fill
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500"

@@ -55,18 +55,7 @@ function DirectoryContent() {
                 const data = await res.json()
                 const results = data.results || (Array.isArray(data) ? data : [])
                 setTotalCount(data.count || results.length)
-                setBusinesses(results.map((biz: any) => ({
-                    id: biz.id,
-                    name: biz.business_name,
-                    category: biz.category_name || 'Business',
-                    location: biz.address,
-                    rating: parseFloat(biz.rating) || 0,
-                    reviews: biz.review_count || 0,
-                    verified: biz.is_verified || false,
-                    productCount: biz.product_count || 0,
-                    serviceCount: biz.service_count || 0,
-                    image: biz.business_image_url || biz.business_logo_url
-                })))
+                setBusinesses(results)
             } else {
                 // Fetch both products and services for offerings view
                 const [prodRes, servRes] = await Promise.all([
@@ -140,14 +129,21 @@ function DirectoryContent() {
     }, [searchQuery, selectedCategory, verifiedOnly])
 
     const filteredBusinesses = highRatingsOnly
-        ? businesses.filter(biz => biz.rating >= 4.0)
+        ? businesses.filter(biz => (parseFloat(biz.rating as any) || 0) >= 4.0)
         : businesses
 
-    const displayedCategories = categories.filter(cat => {
+    interface CategoryWithCounts {
+        id: number;
+        name: string;
+        business_count: number;
+        offering_count: number;
+    }
+
+    const displayedCategories = (categories as unknown as CategoryWithCounts[]).filter(cat => {
         if (viewMode === "businesses") {
-            return (cat as any).business_count > 0;
+            return cat.business_count > 0;
         } else {
-            return (cat as any).offering_count > 0;
+            return cat.offering_count > 0;
         }
     });
 
@@ -288,7 +284,20 @@ function DirectoryContent() {
                 ) : viewMode === "businesses" ? (
                     filteredBusinesses.length > 0 ? (
                         filteredBusinesses.map((biz) => (
-                            <BusinessCard key={biz.id} {...biz} />
+                            <BusinessCard
+                                key={biz.id}
+                                id={biz.id}
+                                name={biz.business_name}
+                                category={biz.category_name}
+                                location={biz.address}
+                                rating={biz.rating}
+                                reviews={biz.review_count}
+                                verified={biz.is_verified}
+                                image={biz.business_logo_url || biz.business_image_url}
+                                productCount={biz.product_count}
+                                serviceCount={biz.service_count}
+                                isInitialFavorite={biz.is_favorite}
+                            />
                         ))
                     ) : (
                         <div className="col-span-full py-20 text-center">
@@ -313,6 +322,7 @@ function DirectoryContent() {
                                 priceRange={off.price_range}
                                 duration={off.duration}
                                 image={off.type === "product" ? off.product_image_url : off.service_image_url}
+                                isInitialFavorite={off.is_favorite}
                             />
                         ))
                     ) : (
@@ -379,8 +389,8 @@ function DirectoryContent() {
                 </div>
             )}
 
-            <div className="mt-8 text-center text-sm text-gray-500 font-medium">
-                Showing {businesses.length} of {totalCount} businesses
+            <div className="mt-8 text-center text-sm text-gray-500 font-medium capitalize">
+                Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount} {viewMode}
             </div>
         </div>
     )

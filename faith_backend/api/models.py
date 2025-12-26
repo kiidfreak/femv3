@@ -74,6 +74,7 @@ class Business(models.Model):
     is_active = models.BooleanField(default=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.IntegerField(default=0)
+    view_count = models.IntegerField(default=0)
     business_image_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_image_url')
     business_logo_url = models.URLField(max_length=500, blank=True, null=True, db_column='business_logo_url')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -133,6 +134,16 @@ class PendingUser(models.Model):
 
     class Meta:
         db_table = 'user_pending_user'
+
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='favorited_by', null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorited_by', null=True, blank=True)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='favorited_by', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'business_favorite'
 
 # Import Role and UserRole models for Django to discover them
 from .roles import Role, UserRole

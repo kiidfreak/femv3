@@ -81,8 +81,8 @@ export default function Home() {
 
         // Combine and limit to 4 items total for teaser
         const combined = [
-          ...prods.map((p: any) => ({ ...p, type: 'product' })),
-          ...servs.map((s: any) => ({ ...s, type: 'service' }))
+          ...prods.map((p: any) => ({ ...p, type: 'product', image_url: p.product_image_url })),
+          ...servs.map((s: any) => ({ ...s, type: 'service', image_url: s.service_image_url }))
         ].slice(0, 4);
 
         setFeaturedOfferings(combined);
@@ -199,6 +199,7 @@ export default function Home() {
                     priceRange={offering.price_range}
                     duration={offering.duration}
                     image={offering.image_url}
+                    isInitialFavorite={offering.is_favorite}
                   />
                 </div>
               ))

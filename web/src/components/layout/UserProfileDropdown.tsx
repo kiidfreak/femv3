@@ -13,12 +13,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import {
-    User, Building2, LayoutDashboard, Settings, LogOut,
+    User, Building2, LayoutDashboard, Settings, LogOut, Heart,
     CheckCircle2, AlertCircle, ChevronRight, ShieldAlert, Info, Check
 } from "lucide-react"
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { getImageUrl } from "@/lib/api-client"
 
 export function UserProfileDropdown() {
     const { user, logout } = useAuth()
@@ -70,7 +71,7 @@ export function UserProfileDropdown() {
                 <Button variant="ghost" className="flex items-center gap-2 relative">
                     <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative shadow-sm border border-[#F58220]/20 overflow-hidden">
                         {user.profile_image_url ? (
-                            <Image src={user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                            <Image src={getImageUrl(user.profile_image_url) || user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
                         ) : (
                             <User className="h-5 w-5 text-[#F58220]" />
                         )}
@@ -106,7 +107,7 @@ export function UserProfileDropdown() {
                     <div className="flex items-center gap-3 mb-3">
                         <div className="h-12 w-12 rounded-full bg-[#F58220]/10 flex items-center justify-center overflow-hidden relative border border-[#F58220]/20">
                             {user.profile_image_url ? (
-                                <Image src={user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                                <Image src={getImageUrl(user.profile_image_url) || user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
                             ) : (
                                 <User className="h-6 w-6 text-[#F58220]" />
                             )}
@@ -223,6 +224,12 @@ export function UserProfileDropdown() {
                             <Link href="/dashboard" className="cursor-pointer">
                                 <Building2 className="mr-2 h-4 w-4" />
                                 My Business
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/favorites" className="cursor-pointer">
+                                <Heart className="mr-2 h-4 w-4" />
+                                My Favorites
                             </Link>
                         </DropdownMenuItem>
                     </>

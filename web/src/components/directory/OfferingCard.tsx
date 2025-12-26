@@ -1,10 +1,20 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Package, Clock, DollarSign, Store, ArrowRight, Tag } from "lucide-react"
+import { Package, Clock, DollarSign, Store, ArrowRight, Tag, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { getImageUrl, apiClient } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth"
+import { toast } from "sonner"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useState } from "react"
 
 interface OfferingCardProps {
     id: number
@@ -18,9 +28,11 @@ interface OfferingCardProps {
     priceRange?: string
     duration?: string
     image?: string
+    isInitialFavorite?: boolean
 }
 
 export function OfferingCard({
+    id,
     businessId,
     businessName,
     name,
@@ -30,13 +42,60 @@ export function OfferingCard({
     priceCurrency = "KES",
     priceRange,
     duration,
-    image
+    image,
+    isInitialFavorite = false
 }: OfferingCardProps) {
+    const [isFavorite, setIsFavorite] = useState(isInitialFavorite)
+    const { user } = useAuth()
+
+    const toggleFavorite = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (!user) {
+            toast.error("Please login to save items", {
+                description: "Create an account to save your favorite offerings."
+            })
+            return
+        }
+
+        try {
+            // Optimistic update
+            const newStatus = !isFavorite
+            setIsFavorite(newStatus)
+
+            const payload: any = {}
+            if (type === 'product') payload.product = id
+            else payload.service = id
+
+            const res = await apiClient.favorites.toggle(payload)
+            if (res.ok) {
+                const data = await res.json()
+                setIsFavorite(data.is_favorite)
+                toast.success(data.is_favorite ? "Added to favorites" : "Removed from favorites")
+            } else {
+                // Rollback
+                setIsFavorite(!newStatus)
+                toast.error("Failed to update favorites")
+            }
+        } catch (error) {
+            setIsFavorite(isFavorite)
+            toast.error("An error occurred")
+        }
+    }
+
     return (
         <Card className="overflow-hidden group hover:border-[#F58220] hover:shadow-lg transition-all duration-300 h-full flex flex-col bg-white">
             <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
                 {image ? (
-                    <Image src={image} alt={name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <Image
+                        src={getImageUrl(image) || image}
+                        alt={name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized={image?.includes('cloudfront.net') || image?.includes('cdn.corenexis.com')}
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-200">
                         {type === "product" ? <Package className="h-16 w-16" /> : <Clock className="h-16 w-16" />}
@@ -52,6 +111,25 @@ export function OfferingCard({
                         {type === "product" ? <Package className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                         {type === "product" ? "Product" : "Service"}
                     </Badge>
+                </div>
+
+                {/* Heart Toggle - Top Right */}
+                <div className="absolute top-3 right-3 z-20">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={toggleFavorite}
+                                    className="p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95"
+                                >
+                                    <Heart className={cn("h-4 w-4", isFavorite && "fill-red-500 text-red-500")} />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{user ? (isFavorite ? "Remove from favorites" : "Add to favorites") : "Login to save"}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
 
                 {/* Price Tag Overlay */}

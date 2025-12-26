@@ -1,19 +1,21 @@
 from django.urls import path, include
+# Trigger reload
 from rest_framework.routers import DefaultRouter
 from .views import (
     UserViewSet, BusinessViewSet, CategoryViewSet,
-    ServiceViewSet, ProductViewSet, ReviewViewSet
+    ServiceViewSet, ProductViewSet, ReviewViewSet, FavoriteViewSet
 )
 from .auth_views import PhoneLoginView, SignupView, VerifyOTPView, UpdateProfileView, ResendOTPView
 from .role_views import RoleViewSet, UserRoleViewSet, PermissionViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
-router.register(r'businesses', BusinessViewSet)
-router.register(r'categories', CategoryViewSet)
-router.register(r'services', ServiceViewSet)
-router.register(r'products', ProductViewSet)
+router.register(r'businesses', BusinessViewSet, basename='business')
+router.register(r'categories', CategoryViewSet, basename='category')
+router.register(r'services', ServiceViewSet, basename='service')
+router.register(r'products', ProductViewSet, basename='product')
 router.register(r'reviews', ReviewViewSet)
+router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 # Role & Permission Management
 router.register(r'roles', RoleViewSet, basename='role')

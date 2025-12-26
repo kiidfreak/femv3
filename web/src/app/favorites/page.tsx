@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth"
 import { apiClient } from "@/lib/api-client"
 import { BusinessCard } from "@/components/directory/BusinessCard"
+import { OfferingCard } from "@/components/directory/OfferingCard"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function FavoritesPage() {
@@ -15,26 +16,27 @@ export default function FavoritesPage() {
     const [favorites, setFavorites] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        // Since we don't have a backend Favorites endpoint yet (based on available tools),
-        // we'll simulate fetching or use a placeholder if the backend doesn't support it.
-        // Assuming for now we fetch 'my favorites' or just show empty state/mock.
-        // 
-        // TODO: Implement backend /favorites endpoint or use localStorage syncing in BusinessCard.
-        // For this demo based on user request "http://localhost:3003/favorites", I will create a placeholder 
-        // that suggests this feature is coming or fetches if possible.
-
-        // Actually, the user asked for "state management for stuff like liking".
-        // Use localStorage for a quick prototype if backend isn't ready.
-
-        const fetchFavorites = async () => {
-            // Mockup logic: read from localStorage if we implemented it there, 
-            // otherwise show empty state or fetch from API if it exists.
+    const fetchFavorites = async () => {
+        try {
+            const res = await apiClient.favorites.list()
+            if (res.ok) {
+                const data = await res.json()
+                setFavorites(data.results || data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch favorites:", error)
+        } finally {
             setLoading(false)
         }
+    }
 
-        fetchFavorites()
-    }, [])
+    useEffect(() => {
+        if (user) {
+            fetchFavorites()
+        } else {
+            setLoading(false)
+        }
+    }, [user])
 
     return (
         <div className="container py-12 min-h-screen">
@@ -48,10 +50,36 @@ export default function FavoritesPage() {
                 </div>
             ) : favorites.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Render favorites here - passing data to BusinessCard */}
-                    {favorites.map(biz => (
-                        <BusinessCard key={biz.id} {...biz} />
-                    ))}
+                    {favorites.map(fav => {
+                        if (fav.business) {
+                            return (
+                                <BusinessCard
+                                    key={`biz-${fav.id}`}
+                                    id={fav.business}
+                                    name={fav.business_name}
+                                    category={fav.category_name}
+                                    location=""
+                                    rating={0}
+                                    reviews={0}
+                                    verified={false}
+                                    isInitialFavorite={true}
+                                />
+                            )
+                        } else {
+                            return (
+                                <OfferingCard
+                                    key={`off-${fav.id}`}
+                                    id={fav.product || fav.service}
+                                    businessId=""
+                                    businessName={fav.business_name}
+                                    name={fav.product_name || fav.service_name}
+                                    description=""
+                                    type={fav.product ? "product" : "service"}
+                                    isInitialFavorite={true}
+                                />
+                            )
+                        }
+                    })}
                 </div>
             ) : (
                 <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">

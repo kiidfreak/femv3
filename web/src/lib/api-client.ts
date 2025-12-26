@@ -12,6 +12,13 @@ const getHeaders = () => {
     return headers
 }
 
+export const getImageUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3").replace('/api/v3', '');
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
 export const apiClient = {
     // Generic helper
     get: async (endpoint: string) => {
@@ -136,5 +143,15 @@ export const apiClient = {
     // 5. Categories
     categories: {
         list: () => fetch(`${API_BASE_URL}/categories/`, { headers: getHeaders() }),
+    },
+
+    // 7. Favorites
+    favorites: {
+        list: (params?: string) => fetch(`${API_BASE_URL}/favorites/${params ? `?${params}` : ''}`, { headers: getHeaders() }),
+        toggle: (data: { business?: string, product?: number, service?: number }) => fetch(`${API_BASE_URL}/favorites/toggle/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }),
     }
 }

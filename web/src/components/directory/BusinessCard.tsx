@@ -8,6 +8,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth"
 import { toast } from "sonner"
+import { getImageUrl, apiClient } from "@/lib/api-client"
 import {
     Tooltip,
     TooltipContent,
@@ -38,12 +39,13 @@ export function BusinessCard({
     verified,
     image,
     productCount = 0,
-    serviceCount = 0
-}: BusinessCardProps) {
-    const [isFavorite, setIsFavorite] = useState(false)
+    serviceCount = 0,
+    isInitialFavorite = false
+}: BusinessCardProps & { isInitialFavorite?: boolean }) {
+    const [isFavorite, setIsFavorite] = useState(isInitialFavorite)
     const { user } = useAuth()
 
-    const toggleFavorite = (e: React.MouseEvent) => {
+    const toggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
 
@@ -54,8 +56,25 @@ export function BusinessCard({
             return
         }
 
-        setIsFavorite(!isFavorite)
-        toast.success(isFavorite ? "Removed from favorites" : "Added to favorites")
+        try {
+            // Optimistic update
+            const newStatus = !isFavorite
+            setIsFavorite(newStatus)
+
+            const res = await apiClient.favorites.toggle({ business: id })
+            if (res.ok) {
+                const data = await res.json()
+                setIsFavorite(data.is_favorite)
+                toast.success(data.is_favorite ? "Added to favorites" : "Removed from favorites")
+            } else {
+                // Rollback
+                setIsFavorite(!newStatus)
+                toast.error("Failed to update favorites")
+            }
+        } catch (error) {
+            setIsFavorite(isFavorite)
+            toast.error("An error occurred")
+        }
     }
 
     return (
@@ -64,11 +83,18 @@ export function BusinessCard({
                 <div className="relative aspect-video bg-gray-100">
                     <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                         {image ? (
-                            <Image src={image} alt={name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <Image
+                                src={getImageUrl(image) || image}
+                                alt={name}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                unoptimized={image?.includes('cloudfront.net') || image?.includes('cdn.corenexis.com')}
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
                         ) : (
                             <div className="flex flex-col items-center justify-center">
                                 <Store className="h-10 w-10 mb-1 opacity-20" />
-                                <span className="text-2xl font-bold opacity-30">{name[0]}</span>
+                                <span className="text-2xl font-bold opacity-30">{name?.charAt(0) || '?'}</span>
                             </div>
                         )}
                     </div>

@@ -5,10 +5,10 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count, Avg, Case, When, Value, IntegerField
-from .models import User, Business, Category, Service, Product, Review
+from .models import User, Business, Category, Service, Product, Review, Favorite
 from .serializers import (
     UserSerializer, BusinessSerializer, BusinessListSerializer, CategorySerializer,
-    ServiceSerializer, ProductSerializer, ReviewSerializer
+    ServiceSerializer, ProductSerializer, ReviewSerializer, FavoriteSerializer
 )
 from .validators import (
     validate_one_business_per_user,
@@ -250,3 +250,64 @@ class ReviewViewSet(viewsets.ModelViewSet):
              raise DRFValidationError({'error': 'You cannot review your own business'})
             
         serializer.save(user=user)
+
+
+class FavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Favorite.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        business = serializer.validated_data.get('business')
+        product = serializer.validated_data.get('product')
+        service = serializer.validated_data.get('service')
+
+        if not any([business, product, service]):
+            raise DRFValidationError({'error': 'You must specify either a business, product, or service.'})
+
+        existing = Favorite.objects.filter(
+            user=self.request.user,
+            business=business,
+            product=product,
+            service=service
+        ).exists()
+
+        if existing:
+            raise DRFValidationError({'error': 'Already in favorites'})
+
+        serializer.save(user=self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def toggle(self, request):
+        business_id = request.data.get('business')
+        product_id = request.data.get('product')
+        service_id = request.data.get('service')
+
+        if not any([business_id, product_id, service_id]):
+            return Response({'error': 'Missing identifier'}, status=400)
+
+        # Build exact filter to avoid deleting "all business favorites" when toggling a product
+        filter_params = {'user': request.user}
+        if business_id: 
+            filter_params['business_id'] = business_id
+            filter_params['product_id'] = None
+            filter_params['service_id'] = None
+        elif product_id:
+            filter_params['product_id'] = product_id
+            filter_params['business_id'] = None
+            filter_params['service_id'] = None
+        elif service_id:
+            filter_params['service_id'] = service_id
+            filter_params['business_id'] = None
+            filter_params['product_id'] = None
+
+        fav = Favorite.objects.filter(**filter_params).first()
+        if fav:
+            fav.delete()
+            return Response({'status': 'removed', 'is_favorite': False})
+        else:
+            # Clear other fields for this specific favorite type
+            Favorite.objects.create(**filter_params)
+            return Response({'status': 'added', 'is_favorite': True})

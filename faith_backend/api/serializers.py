@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Business, Category, Service, Product, Review
+from .models import User, Business, Category, Service, Product, Review, Favorite
 from django.contrib.auth.models import Permission
 from .roles import Role, UserRole
 
@@ -26,16 +26,30 @@ class ServiceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Service
-        fields = ['id', 'business', 'business_name', 'name', 'description', 'price_range', 'duration', 'service_image_url', 'is_active']
+        fields = ['id', 'business', 'business_name', 'name', 'description', 'price_range', 'duration', 'service_image_url', 'is_active', 'is_favorite']
         read_only_fields = ['business']
+
+    is_favorite = serializers.SerializerMethodField()
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(user=request.user).exists()
+        return False
 
 class ProductSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(source='business.business_name', read_only=True)
     
     class Meta:
         model = Product
-        fields = ['id', 'business', 'business_name', 'name', 'description', 'price', 'price_currency', 'product_image_url', 'is_active', 'in_stock']
+        fields = ['id', 'business', 'business_name', 'name', 'description', 'price', 'price_currency', 'product_image_url', 'is_active', 'in_stock', 'is_favorite']
         read_only_fields = ['business']
+
+    is_favorite = serializers.SerializerMethodField()
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(user=request.user).exists()
+        return False
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -55,8 +69,16 @@ class BusinessListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'business_name', 'description', 'address', 
             'category', 'category_name', 'owner_name', 'rating', 'review_count',
-            'is_verified', 'product_count', 'service_count', 'business_image_url', 'business_logo_url'
+            'is_verified', 'product_count', 'service_count', 'business_image_url', 'business_logo_url',
+            'is_favorite'
         ]
+
+    is_favorite = serializers.SerializerMethodField()
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(user=request.user).exists()
+        return False
 
 class BusinessSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -75,8 +97,16 @@ class BusinessSerializer(serializers.ModelSerializer):
             'id', 'business_name', 'description', 'address', 
             'phone', 'email', 'website',
             'category', 'category_name', 'owner_name', 'rating', 'review_count', 'view_count',
-            'is_verified', 'services', 'products', 'reviews', 'business_image_url', 'business_logo_url'
+            'is_verified', 'services', 'products', 'reviews', 'business_image_url', 'business_logo_url',
+            'is_favorite'
         ]
+
+    is_favorite = serializers.SerializerMethodField()
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(user=request.user).exists()
+        return False
 
 
 # Role & Permission Serializers
@@ -111,3 +141,19 @@ class UserRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserRole
         fields = ['id', 'user', 'role', 'role_name', 'user_name', 'assigned_by_name', 'assigned_at']
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    business_name = serializers.CharField(source='business.business_name', read_only=True)
+    category_name = serializers.CharField(source='business.category.name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = [
+            'id', 'user', 'business', 'product', 'service', 
+            'business_name', 'category_name', 'product_name', 'service_name',
+            'created_at'
+        ]
+        read_only_fields = ['user']
