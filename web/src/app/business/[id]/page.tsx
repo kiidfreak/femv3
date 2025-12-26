@@ -283,7 +283,7 @@ export default function BusinessDetailPage() {
                                         <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                                         <div className="flex items-center justify-between">
                                             <span className="text-xl font-bold text-[#F58220]">
-                                                KES {parseFloat(product.price).toLocaleString()}
+                                                KES {parseFloat(product.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                             <Badge className={product.in_stock ? "bg-green-50 text-green-700 border-green-100" : "bg-gray-100 text-gray-600"}>
                                                 {product.in_stock ? "In Stock" : "Out of Stock"}

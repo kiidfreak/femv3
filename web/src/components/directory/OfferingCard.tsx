@@ -59,7 +59,7 @@ export function OfferingCard({
                     <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md border border-gray-100 flex items-center gap-1.5 font-bold text-[#1A1A1A]">
                         <Tag className="h-3.5 w-3.5 text-[#F58220]" />
                         {type === "product" ? (
-                            <span>{priceCurrency} {price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span>{priceCurrency} {Number(price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         ) : (
                             <span className="text-xs">{priceRange || "Price on request"}</span>
                         )}

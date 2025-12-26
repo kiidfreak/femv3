@@ -338,7 +338,7 @@ function ProductCard({ product, onToggleStatus }: { product: Product; onToggleSt
                             <div className="flex items-center gap-2">
                                 <DollarSign className="h-5 w-5 text-[#F58220]" />
                                 <span className="text-lg font-bold text-[#1A1A1A]">
-                                    {product.price_currency} {product.price.toLocaleString()}
+                                    {product.price_currency} {product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-bold ${product.in_stock

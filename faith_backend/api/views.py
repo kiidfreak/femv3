@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Case, When, Value, IntegerField
 from .models import User, Business, Category, Service, Product, Review
 from .serializers import (
     UserSerializer, BusinessSerializer, BusinessListSerializer, CategorySerializer,
@@ -23,10 +23,20 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny] # Refine in production
 
 class BusinessViewSet(viewsets.ModelViewSet):
-    queryset = Business.objects.select_related('user', 'category').annotate(
-        products_count_annotated=Count('products', distinct=True),
-        services_count_annotated=Count('services', distinct=True)
-    ).prefetch_related('services', 'products', 'reviews__user').order_by('-created_at')
+    def get_queryset(self):
+        return Business.objects.select_related('user', 'category').annotate(
+            products_count_annotated=Count('products', distinct=True),
+            services_count_annotated=Count('services', distinct=True),
+            has_identity=Case(
+                When(business_logo_url__isnull=False, then=Value(1)),
+                When(business_image_url__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).prefetch_related('services', 'products', 'reviews__user').order_by(
+            '-is_verified', '-has_identity', '-rating', '-created_at'
+        )
+
     serializer_class = BusinessListSerializer
     
     def get_serializer_class(self):
@@ -90,13 +100,20 @@ class BusinessViewSet(viewsets.ModelViewSet):
         church_verification = 40 if business.is_verified else 0
         
         # Profile completion estimate
-        profile_score = 20
+        profile_score = 0
         if business.description: profile_score += 5
         if business.phone: profile_score += 5
         if business.email: profile_score += 5
         if business.website: profile_score += 5
-        # Normalize to 20
-        profile_score = min(20, (profile_score / 40) * 20)
+        if business.business_logo_url: profile_score += 5
+        if business.business_image_url: profile_score += 5
+        if business.address: profile_score += 5
+        # The remaining 5 can be for having at least 1 offering
+        if business.prod_count > 0 or business.serv_count > 0: profile_score += 5
+        
+        # Profile score is out of 30, scale it to max 20 if needed, or keep as is.
+        # Let's say profile completeness is max 20.
+        profile_score_normalized = min(20, (profile_score / 40) * 20)
         
         # Reviews score (max 25)
         reviews_score = min(25, (business.rating * (min(business.review_count, 10) / 10) / 5) * 25)
@@ -115,7 +132,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             'services_count': getattr(business, 'serv_count', 0),
             'trust_breakdown': [
                 {'label': 'Church Verification', 'score': church_verification, 'max': 40, 'status': 'Verified' if business.is_verified else 'Pending', 'color': 'bg-green-500'},
-                {'label': 'Profile Completeness', 'score': round(profile_score), 'max': 20, 'status': 'High' if profile_score > 15 else 'Medium', 'color': 'bg-blue-500'},
+                {'label': 'Profile Completeness', 'score': round(profile_score_normalized), 'max': 20, 'status': 'High' if profile_score_normalized > 15 else 'Medium', 'color': 'bg-blue-500'},
                 {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Good' if reviews_score > 15 else 'Developing', 'color': 'bg-yellow-500'},
                 {'label': 'Account Age', 'score': age_score, 'max': 15, 'status': 'Stable Member', 'color': 'bg-purple-500'},
             ],
@@ -151,7 +168,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
 class ServiceViewSet(viewsets.ModelViewSet):
-    queryset = Service.objects.select_related('business').all()
+    def get_queryset(self):
+        # Prioritize services from verified businesses with visual identity
+        return Service.objects.select_related('business').annotate(
+            biz_has_identity=Case(
+                When(business__business_logo_url__isnull=False, then=Value(1)),
+                When(business__business_image_url__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by('-business__is_verified', '-biz_has_identity', '-business__rating', '-created_at')
     serializer_class = ServiceSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -175,7 +201,16 @@ class ServiceViewSet(viewsets.ModelViewSet):
             raise DRFValidationError({'error': f'Database error: {str(e)}'})
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.select_related('business').all()
+    def get_queryset(self):
+        # Prioritize products from verified businesses with visual identity
+        return Product.objects.select_related('business').annotate(
+            biz_has_identity=Case(
+                When(business__business_logo_url__isnull=False, then=Value(1)),
+                When(business__business_image_url__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by('-business__is_verified', '-biz_has_identity', '-business__rating', '-created_at')
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
