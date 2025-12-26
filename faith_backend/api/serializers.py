@@ -38,8 +38,14 @@ class ReviewSerializer(serializers.ModelSerializer):
 class BusinessListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     owner_name = serializers.CharField(source='user.first_name', read_only=True)
-    product_count = serializers.IntegerField(source='products.count', read_only=True)
-    service_count = serializers.IntegerField(source='services.count', read_only=True)
+    product_count = serializers.SerializerMethodField()
+    service_count = serializers.SerializerMethodField()
+    
+    def get_product_count(self, obj):
+        return obj.products.count()
+
+    def get_service_count(self, obj):
+        return obj.services.count()
     
     class Meta:
         model = Business

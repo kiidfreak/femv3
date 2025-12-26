@@ -80,12 +80,16 @@ export default function ManageOfferingsPage() {
                 const data = await res.json()
                 setProducts(data.products || [])
                 setServices(data.services || [])
+            } else if (res.status === 404) {
+                toast.info("Create a business profile to start adding offerings!", {
+                    description: "You'll be able to manage products and services here once your profile is set up."
+                })
             } else {
                 toast.error("Failed to load offerings")
             }
         } catch (error) {
             console.error("Error fetching offerings:", error)
-            toast.error("An error occurred")
+            toast.error("An error occurred while connecting to the server.")
         } finally {
             setIsLoading(false)
         }

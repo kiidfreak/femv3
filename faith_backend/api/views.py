@@ -21,7 +21,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny] # Refine in production
 
 class BusinessViewSet(viewsets.ModelViewSet):
-    queryset = Business.objects.select_related('user', 'category')
+    queryset = Business.objects.select_related('user', 'category').order_by('-created_at')
     serializer_class = BusinessListSerializer
     
     def get_serializer_class(self):
@@ -179,8 +179,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
              raise ValidationError({'error': 'Authentication required to review'})
         
-        serializer.save(user=user)
-
         business = serializer.validated_data.get('business')
         if business and business.user == user:
              raise ValidationError({'error': 'You cannot review your own business'})
