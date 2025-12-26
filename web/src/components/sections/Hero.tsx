@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export function Hero() {
+export function Hero({ stats = { total_members: 0 } }: { stats?: { total_members: number } }) {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchType, setSearchType] = useState<"businesses" | "offerings">("businesses")
     const router = useRouter()
@@ -90,7 +90,7 @@ export function Hero() {
                                 ))}
                             </div>
                             <p className="text-sm font-bold text-gray-500">
-                                Joined by <span className="text-[#F58220]">2,500+</span> community members
+                                Joined by <span className="text-[#F58220]">{stats.total_members.toLocaleString()}+</span> community members
                             </p>
                         </div>
                     </div>
