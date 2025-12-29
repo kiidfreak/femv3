@@ -36,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class BusinessViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        return Business.objects.select_related('user', 'category').annotate(
+        queryset = Business.objects.select_related('user', 'category').annotate(
             products_count_annotated=Count('products', distinct=True),
             services_count_annotated=Count('services', distinct=True),
             has_identity=Case(
@@ -45,20 +45,93 @@ class BusinessViewSet(viewsets.ModelViewSet):
                 default=Value(0),
                 output_field=IntegerField(),
             )
-        ).prefetch_related('services', 'products', 'reviews__user').order_by(
-            '-is_verified', '-has_identity', '-rating', '-created_at'
-        )
+        ).prefetch_related('services', 'products', 'reviews__user', 'images')
+
+        # Location-based filtering (Radius search approximation)
+        lat = self.request.query_params.get('lat')
+        lng = self.request.query_params.get('lng')
+        radius = self.request.query_params.get('radius', 50) # default 50km
+
+        if lat and lng:
+            try:
+                lat, lng, radius = float(lat), float(lng), float(radius)
+                # Degrees to km approx: 1 deg = 111km
+                lat_deg = radius / 111.0
+                lng_deg = radius / (111.0 * abs(float(lat) / 90.0 + 0.1)) # Rough approx
+                
+                queryset = queryset.filter(
+                    latitude__range=(lat - lat_deg, lat + lat_deg),
+                    longitude__range=(lng - lng_deg, lng + lng_deg)
+                )
+            except ValueError:
+                pass
+
+        return queryset.order_by('-is_verified', '-has_identity', '-rating', '-created_at')
 
     serializer_class = BusinessListSerializer
     
     def get_serializer_class(self):
         if self.action == 'list':
             return BusinessListSerializer
+        if self.action == 'suggestions':
+            return BusinessListSerializer
         return BusinessSerializer
+        
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['category', 'is_verified']
+    filterset_fields = ['category', 'is_verified', 'business_type']
     search_fields = ['business_name', 'description']
+
+    @action(detail=False, methods=['get'])
+    def suggestions(self, request):
+        """Quick search suggestions for Hero search box"""
+        query = request.query_params.get('q', '')
+        if not query:
+            return Response([])
+        
+        businesses = self.get_queryset().filter(business_name__icontains=query)[:5]
+        serializer = BusinessListSerializer(businesses, many=True, context={'request': request})
+        
+        # Also suggest categories
+        categories = Category.objects.filter(name__icontains=query)[:3]
+        cat_serializer = CategorySerializer(categories, many=True)
+        
+        return Response({
+            'businesses': serializer.data,
+            'categories': cat_serializer.data
+        })
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_report(self, request):
+        """Download business performance report as CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        business = Business.objects.filter(user=request.user).first()
+        if not business:
+            return Response({'error': 'No business profile found'}, status=404)
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{business.business_name}_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Metric', 'Value', 'Details'])
+        
+        # Add basic stats
+        writer.writerow([timezone.now().date(), 'Total Views', business.view_count, 'Lifetime views'])
+        writer.writerow([timezone.now().date(), 'Current Rating', business.rating, f'From {business.review_count} reviews'])
+        
+        # Add page views summary (Last 30 days)
+        from api.analytics_models import PageView
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        views_by_source = business.page_views.filter(viewed_at__gte=thirty_days_ago).values('referrer_source').annotate(count=Count('id'))
+        
+        writer.writerow([])
+        writer.writerow(['30-Day Traffic Sources'])
+        for item in views_by_source:
+            writer.writerow(['', item['referrer_source'] or 'Direct', item['count'], ''])
+            
+        return response
     
     def perform_create(self, serializer):
         """Validate business limit before creation"""
@@ -94,6 +167,41 @@ class BusinessViewSet(viewsets.ModelViewSet):
         limits = get_remaining_slots(request.user, business)
         return Response(limits)
 
+    @action(detail=True, methods=['post'])
+    def upload_image(self, request, pk=None):
+        business = self.get_object()
+        if business.user != request.user:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Limit to 10 images
+        if business.images.count() >= 10:
+            return Response({'error': 'Maximum 10 images allowed in gallery'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        business_image = BusinessImage.objects.create(
+            business=business,
+            image=image_file,
+            caption=request.data.get('caption', '')
+        )
+        
+        return Response(BusinessImageSerializer(business_image).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='delete_image/(?P<image_id>[^/.]+)')
+    def delete_image(self, request, pk=None, image_id=None):
+        business = self.get_object()
+        if business.user != request.user:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            img = business.images.get(id=image_id)
+            img.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except BusinessImage.DoesNotExist:
+            return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Get analytics for the current user's business"""
@@ -108,36 +216,40 @@ class BusinessViewSet(viewsets.ModelViewSet):
         if not business:
             return Response({'error': 'No business profile found'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Calculate Trust Score (max 100)
+        # Calculate Trust Score (Using model property)
+        trust_score = business.trust_score
+        
+        # Breakdown for frontend (matching model property logic)
         church_verification = 40 if business.is_verified else 0
         
-        # Profile completion estimate
-        profile_score = 0
-        if business.description: profile_score += 5
-        if business.phone: profile_score += 5
-        if business.email: profile_score += 5
-        if business.website: profile_score += 5
-        if business.business_logo: profile_score += 5  # Fixed: use business_logo not business_logo_url
-        if business.business_image: profile_score += 5  # Fixed: use business_image not business_image_url
-        if business.address: profile_score += 5
-        # The remaining 5 can be for having at least 1 offering
-        if business.prod_count > 0 or business.serv_count > 0: profile_score += 5
+        # Profile calculation (same logic as property)
+        profile_pts = 0
+        if business.description: profile_pts += 1
+        if business.phone: profile_pts += 1
+        if business.email: profile_pts += 1
+        if business.website: profile_pts += 1
+        if business.business_logo: profile_pts += 1
+        if business.business_image: profile_pts += 1
+        if business.address: profile_pts += 1
+        if business.prod_count > 0 or business.serv_count > 0: profile_pts += 1
+        if business.user.profile_image: profile_pts += 1
         
-        # Profile score is out of 40, scale it to max 20
-        profile_score_normalized = min(20, (profile_score / 40) * 20)
+        profile_score = (profile_pts / 9) * 20
         
-        # Reviews score (max 25)
-        reviews_score = min(25, (float(business.rating) * (min(business.review_count, 10) / 10) / 5) * 25)
+        review_vol_factor = min(business.review_count, 10) / 10
+        reviews_score = float(business.rating) * review_vol_factor * 5
         
-        # Account age (max 15) - Real calculation
+        age_score = 0
         if business.created_at:
-            account_age_days = (timezone.now() - business.created_at).days
-            # Scale: 0 days = 0, 365+ days = 15
-            age_score = min(15, (account_age_days / 365) * 15)
-        else:
-            age_score = 0
-        
-        trust_score = church_verification + profile_score + reviews_score + age_score
+            days = (timezone.now() - business.created_at).days
+            age_score = min(15, (days / 365) * 15)
+            
+        trust_breakdown = [
+            {'label': 'Church Verification', 'score': church_verification, 'max': 40, 'status': 'Verified' if business.is_verified else 'Pending', 'color': 'bg-green-500' if business.is_verified else 'bg-gray-300'},
+            {'label': 'Profile Completeness', 'score': round(profile_score), 'max': 20, 'status': 'Good' if profile_pts >= 6 else 'Partial', 'color': 'bg-blue-500' if profile_pts >= 6 else 'bg-blue-300'},
+            {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Active' if business.review_count > 0 else 'None', 'color': 'bg-yellow-500' if business.review_count > 0 else 'bg-yellow-300'},
+            {'label': 'Account Age', 'score': round(age_score), 'max': 15, 'status': 'Established' if age_score > 10 else 'New', 'color': 'bg-purple-500' if age_score > 10 else 'bg-purple-300'},
+        ]
         
         # Real Analytics from PageView model
         from api.analytics_models import PageView

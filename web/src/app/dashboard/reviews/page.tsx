@@ -5,6 +5,7 @@ import { apiClient } from "@/lib/api-client"
 import { toast } from "sonner"
 import { Loader2, ShieldCheck, User, Star, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
 interface Review {
@@ -17,13 +18,14 @@ interface Review {
 }
 
 export default function ReviewsPage() {
+    const { user } = useAuth()
     const [reviews, setReviews] = useState<Review[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchReviews = async () => {
             try {
-                // First get the business ID
+                // Try to get business ID first
                 const bizRes = await apiClient.businesses.myBusiness()
                 if (bizRes.ok) {
                     const biz = await bizRes.json()
@@ -31,6 +33,17 @@ export default function ReviewsPage() {
                     if (revRes.ok) {
                         const data = await revRes.json()
                         setReviews(data.results || data)
+                    }
+                } else {
+                    // If no business, fetch reviews authored by the user
+                    // Using 'user=me' or filtering by current user ID if the API supports it
+                    // Assuming apiClient.reviews.list supports filtering by user
+                    if (user?.id) {
+                        const revRes = await apiClient.reviews.list(`user_id=${user.id}`)
+                        if (revRes.ok) {
+                            const data = await revRes.json()
+                            setReviews(data.results || data)
+                        }
                     }
                 }
             } catch (error) {
@@ -41,8 +54,8 @@ export default function ReviewsPage() {
             }
         }
 
-        fetchReviews()
-    }, [])
+        if (user) fetchReviews()
+    }, [user])
 
     return (
         <div className="space-y-6">
