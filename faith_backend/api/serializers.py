@@ -179,8 +179,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
     verified = serializers.BooleanField(source='business.is_verified', read_only=True)
 
     # Offering Details
-    product_image = serializers.URLField(source='product.product_image_url', read_only=True)
-    service_image = serializers.URLField(source='service.service_image_url', read_only=True)
+    product_image = serializers.ImageField(source='product.product_image', read_only=True)
+    service_image = serializers.ImageField(source='service.service_image', read_only=True)
     product_description = serializers.CharField(source='product.description', read_only=True)
     service_description = serializers.CharField(source='service.description', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)

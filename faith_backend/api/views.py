@@ -28,8 +28,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def recent_members(self, request):
         """Get recent members with profile pictures for homepage display"""
         users = User.objects.filter(
-            profile_image_url__isnull=False
-        ).exclude(profile_image_url='').order_by('-date_joined')[:20]
+            profile_image__isnull=False
+        ).exclude(profile_image='').order_by('-created_at')[:20]
         
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
@@ -40,8 +40,8 @@ class BusinessViewSet(viewsets.ModelViewSet):
             products_count_annotated=Count('products', distinct=True),
             services_count_annotated=Count('services', distinct=True),
             has_identity=Case(
-                When(business_logo_url__isnull=False, then=Value(1)),
-                When(business_image_url__isnull=False, then=Value(1)),
+                When(business_logo__isnull=False, then=Value(1)),
+                When(business_image__isnull=False, then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField(),
             )
@@ -270,8 +270,8 @@ class ServiceViewSet(viewsets.ModelViewSet):
         # Prioritize services from verified businesses with visual identity
         return Service.objects.select_related('business').annotate(
             biz_has_identity=Case(
-                When(business__business_logo_url__isnull=False, then=Value(1)),
-                When(business__business_image_url__isnull=False, then=Value(1)),
+                When(business__business_logo__isnull=False, then=Value(1)),
+                When(business__business_image__isnull=False, then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField(),
             )
@@ -303,8 +303,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         # Prioritize products from verified businesses with visual identity
         return Product.objects.select_related('business').annotate(
             biz_has_identity=Case(
-                When(business__business_logo_url__isnull=False, then=Value(1)),
-                When(business__business_image_url__isnull=False, then=Value(1)),
+                When(business__business_logo__isnull=False, then=Value(1)),
+                When(business__business_image__isnull=False, then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField(),
             )

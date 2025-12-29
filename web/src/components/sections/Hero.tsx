@@ -29,7 +29,7 @@ export function Hero({ stats = { total_members: 0 } }: { stats?: { total_members
                     <div className="text-left animate-fade-in-up">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-[#F58220] text-sm font-bold mb-8">
                             <Users className="h-4 w-4" />
-                            Connecting Faith-Based Commerce
+                            The Business Network
                         </div>
 
                         <h1 className="text-6xl lg:text-8xl font-black tracking-tight text-[#1A1A1A] leading-[1.1] mb-2">
