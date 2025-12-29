@@ -46,7 +46,7 @@ export default function ReportsPage() {
 
     const fetchReports = async () => {
         try {
-            const res = await apiClient.businesses.stats()
+            const res = await apiClient.businesses.getStats()
             if (res.ok) {
                 const data = await res.json()
                 setStats(data)

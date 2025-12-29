@@ -301,15 +301,14 @@ class BusinessViewSet(viewsets.ModelViewSet):
         return Response({
             'total_views': total_views,
             'likes': likes_count,
-            'church_groups': 12, # Placeholder for now
             'trust_score': round(trust_score),
             'products_count': getattr(business, 'prod_count', 0),
             'services_count': getattr(business, 'serv_count', 0),
             'trust_breakdown': [
                 {'label': 'Church Verification', 'score': round(church_verification), 'max': 40, 'status': 'Verified' if business.is_verified else 'Pending', 'color': 'bg-green-500' if business.is_verified else 'bg-gray-300'},
-                {'label': 'Profile Completeness', 'score': round(profile_score_normalized), 'max': 20, 'status': 'Complete' if profile_score_normalized >= 18 else ('High' if profile_score_normalized > 12 else ('Medium' if profile_score_normalized > 6 else 'Low')), 'color': 'bg-blue-500'},
-                {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Excellent' if reviews_score >= 20 else ('Good' if reviews_score > 12 else ('Fair' if reviews_score > 5 else 'None')), 'color': 'bg-yellow-500'},
-                {'label': 'Account Age', 'score': round(age_score), 'max': 15, 'status': f'{account_age_days} days' if business.created_at else 'New', 'color': 'bg-purple-500'},
+                {'label': 'Profile Completeness', 'score': round(profile_score), 'max': 20, 'status': 'Good' if profile_pts >= 6 else 'Partial', 'color': 'bg-blue-500' if profile_pts >= 6 else 'bg-blue-300'},
+                {'label': 'Community Reviews', 'score': round(reviews_score), 'max': 25, 'status': 'Active' if business.review_count > 0 else 'None', 'color': 'bg-yellow-500' if business.review_count > 0 else 'bg-yellow-300'},
+                {'label': 'Account Age', 'score': round(age_score), 'max': 15, 'status': 'Established' if age_score > 10 else 'New', 'color': 'bg-purple-500' if age_score > 10 else 'bg-purple-300'},
             ],
             'daily_views': daily_views,
             'referral_sources': referral_sources if referral_sources else [{'source': 'Direct', 'percentage': 100, 'color': '#F58220'}]

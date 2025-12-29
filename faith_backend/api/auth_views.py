@@ -232,9 +232,11 @@ class VerifyOTPView(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'user_type': user.user_type,
+                'partnership_number': user.partnership_number,
                 'phone_verified': user.phone_verified,
                 'has_business_profile': user.has_business_profile,
-                'is_verified': user.is_verified # Church verification
+                'is_verified': user.is_verified, # Church verification
+                'profile_image_url': user.profile_image.url if user.profile_image else None
             }
         })
 
@@ -252,6 +254,7 @@ class UpdateProfileView(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'user_type': user.user_type,
+                'partnership_number': user.partnership_number,
                 'phone_verified': user.phone_verified,
                 'has_business_profile': user.has_business_profile,
                 'is_verified': user.is_verified, # Church verification
@@ -301,6 +304,7 @@ class UpdateProfileView(APIView):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'user_type': user.user_type,
+                'partnership_number': user.partnership_number,
                 'phone_verified': user.phone_verified,
                 'has_business_profile': user.has_business_profile,
                 'is_verified': user.is_verified,
