@@ -200,6 +200,12 @@ export default function BusinessDetailPage() {
             if (res.ok) {
                 const data = await res.json()
                 toast.success(data.is_favorite ? "Added to favorites" : "Removed from favorites")
+
+                // Update the selectedOffering state to reflect the new favorite status
+                setSelectedOffering({
+                    ...offering,
+                    is_favorite: data.is_favorite
+                })
             }
         } catch (error) {
             toast.error("Failed to update favorites")
@@ -729,10 +735,16 @@ export default function BusinessDetailPage() {
                                                     </Button>
                                                     <Button
                                                         variant="outline"
-                                                        className="h-14 w-14 rounded-2xl border-2 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all p-0"
+                                                        className={cn(
+                                                            "h-14 px-6 rounded-2xl border-2 transition-all font-bold gap-2",
+                                                            selectedOffering.is_favorite
+                                                                ? "bg-red-50 text-red-500 border-red-200"
+                                                                : "hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+                                                        )}
                                                         onClick={() => toggleOfferingFavorite(selectedOffering)}
                                                     >
-                                                        <Heart className="h-6 w-6" />
+                                                        <Heart className={cn("h-5 w-5", selectedOffering.is_favorite && "fill-red-500")} />
+                                                        {selectedOffering.is_favorite ? "Saved" : "Save"}
                                                     </Button>
                                                 </div>
                                                 <p className="text-center text-[11px] text-gray-400 font-medium">
