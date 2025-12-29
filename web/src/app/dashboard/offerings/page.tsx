@@ -382,11 +382,19 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || [])
+        console.log('📸 Files selected:', files.length)
+        console.log('📊 Current state - imageFiles:', imageFiles.length, 'imagePreviews:', imagePreviews.length)
+
         const remainingSlots = MAX_IMAGES - imageFiles.length
         const filesToAdd = files.slice(0, remainingSlots)
+        console.log('➕ Will add:', filesToAdd.length, 'files')
 
         if (filesToAdd.length > 0) {
-            setImageFiles(prev => [...prev, ...filesToAdd])
+            setImageFiles(prev => {
+                const newFiles = [...prev, ...filesToAdd]
+                console.log('✅ Setting imageFiles to:', newFiles.length)
+                return newFiles
+            })
 
             filesToAdd.forEach(file => {
                 const reader = new FileReader()

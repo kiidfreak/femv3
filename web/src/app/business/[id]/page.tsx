@@ -267,9 +267,7 @@ export default function BusinessDetailPage() {
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="w-full h-48 bg-gradient-to-br from-[#1A1A1A] to-[#333] rounded-3xl" />
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Gallery Slider Section */}
@@ -360,7 +358,11 @@ export default function BusinessDetailPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-gray-600 leading-relaxed">{business.description}</p>
+                                <p className="text-gray-600 leading-relaxed">
+                                    {business.description?.includes("Partnership Number:")
+                                        ? business.description.split("Partnership Number:")[0].trim()
+                                        : business.description}
+                                </p>
                             </div>
 
                             {/* Action Buttons */}
