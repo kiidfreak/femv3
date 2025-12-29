@@ -62,17 +62,23 @@ export default function BusinessSettingsPage() {
                     if (res.ok) {
                         const data = await res.json()
                         setBusiness(data)
+
+                        // Strip partnership number from description if it exists
+                        let cleanDescription = data.description || ""
+                        if (cleanDescription.includes("Partnership Number:")) {
+                            cleanDescription = cleanDescription.split("\n\nPartnership Number:")[0]
+                        }
+
                         setFormData({
                             business_name: data.business_name || "",
-                            description: data.description || "",
+                            description: cleanDescription,
                             category_id: data.category?.id || "",
-                            // Handle potential different field names from API vs Form
-                            phone: data.phone_number || data.phone || "", // API might return 'phone_number'
+                            phone: data.phone || "",
                             email: data.email || "",
                             website: data.website || "",
                             address: data.address || "",
-                            city: data.city || "",
-                            county: data.county || ""
+                            city: "",  // Backend doesn't have separate city field
+                            county: ""  // Backend doesn't have separate county field
                         })
                         if (data.business_logo_url) {
                             setLogoPreview(data.business_logo_url)
@@ -123,33 +129,30 @@ export default function BusinessSettingsPage() {
             data.append('phone', formData.phone)
             data.append('email', formData.email)
             data.append('website', formData.website)
-            data.append('address', formData.address)
-            data.append('city', formData.city)
-            data.append('county', formData.county)
+            // Backend has single address field, send full address
+            let fullAddress = formData.address
+            if (formData.city) {
+                fullAddress += fullAddress ? `, ${formData.city}` : formData.city
+            }
+            if (formData.county) {
+                fullAddress += fullAddress ? `, ${formData.county}` : formData.county
+            }
+            data.append('address', fullAddress)
 
             if (logoFile) {
                 data.append('business_logo', logoFile)
             }
 
-            const res = await apiClient.businesses.update(business.id, data) // Ensure update handles FormData
-
-            // If apiClient.businesses.update expects JSON, we might need a different approach or verify it handles FormData.
-            // Assuming it handles pure object, let's verify. 
-            // Looking at api-client.ts (from memory), update usually takes ID and payload. 
-            // If the payload is FormData, the fetch wrapper should handle it if correctly implemented to not set Content-Type header (let browser set boundary).
-            // But apiClient wrapper usually sets JSON content type.
-            // Let's use direct fetch for safety here or assume apiClient handles it. 
-            // SAFE FALLBACK: direct fetch like in SettingsPage to ensure FormData works.
+            const res = await apiClient.businesses.update(business.id, data)
 
             if (res.ok) {
                 toast.success("Business profile updated successfully")
-                // Refresh business data to reflect changes (e.g. logo URL from backend)
                 const updatedData = await res.json()
                 setBusiness(updatedData)
                 if (updatedData.business_logo_url) {
                     setLogoPreview(updatedData.business_logo_url)
                 }
-                setLogoFile(null) // Reset file to prevent re-upload
+                setLogoFile(null)
             } else {
                 throw new Error("Failed to update")
             }
@@ -198,7 +201,7 @@ export default function BusinessSettingsPage() {
                             <Label>Business Logo</Label>
                             <div className="flex items-center gap-4">
                                 <div
-                                    onClick={handleImageClick}
+                                    onClick={handleLogoClick}
                                     className="relative w-24 h-24 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 hover:border-[#F58220] cursor-pointer transition-colors overflow-hidden group flex items-center justify-center"
                                 >
                                     {logoPreview ? (
@@ -260,7 +263,7 @@ export default function BusinessSettingsPage() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Propfile Description</Label>
+                            <Label htmlFor="description">Profile Description</Label>
                             <Textarea
                                 id="description"
                                 name="description"
