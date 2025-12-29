@@ -203,8 +203,8 @@ class VerifyOTPView(APIView):
             # Successful signup verification - Create the user now
             try:
                 user = User.objects.create(
-                    phone=pending.phone,
-                    email=pending.email,
+                    phone=pending.phone or None,
+                    email=pending.email or None,
                     first_name=pending.first_name,
                     partnership_number=pending.partnership_number,
                     phone_verified=True,
