@@ -366,11 +366,10 @@ function ServiceCard({ service, onToggleStatus, onEdit }: { service: Service; on
 
 function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "products" | "services"; initialData?: any; onClose: () => void; onSuccess: () => void }) {
     const [isLoading, setIsLoading] = useState(false)
-    const [imageFile, setImageFile] = useState<File | null>(null)
-    const [imagePreview, setImagePreview] = useState<string | null>(
-        type === "products" ? initialData?.product_image : initialData?.service_image || null
-    )
+    const [imageFiles, setImageFiles] = useState<File[]>([])
+    const [imagePreviews, setImagePreviews] = useState<string[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const MAX_IMAGES = 3
 
     const [formData, setFormData] = useState({
         name: initialData?.name || "",
@@ -382,15 +381,34 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
     })
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            setImageFile(file)
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string)
-            }
-            reader.readAsDataURL(file)
+        const files = Array.from(e.target.files || [])
+        const remainingSlots = MAX_IMAGES - imageFiles.length
+        const filesToAdd = files.slice(0, remainingSlots)
+
+        if (filesToAdd.length > 0) {
+            setImageFiles(prev => [...prev, ...filesToAdd])
+
+            filesToAdd.forEach(file => {
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                    setImagePreviews(prev => [...prev, reader.result as string])
+                }
+                reader.readAsDataURL(file)
+            })
         }
+
+        if (files.length > remainingSlots) {
+            toast.error(`Maximum ${MAX_IMAGES} images allowed`)
+        }
+
+        if (e.target) {
+            e.target.value = ''
+        }
+    }
+
+    const handleRemoveImage = (index: number) => {
+        setImageFiles(prev => prev.filter((_, i) => i !== index))
+        setImagePreviews(prev => prev.filter((_, i) => i !== index))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -411,16 +429,18 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
                 data.append('price_currency', formData.price_currency)
                 data.append('is_active', initialData ? String(initialData.is_active) : "true")
                 data.append('in_stock', initialData ? String(initialData.in_stock) : "true")
-                if (imageFile) {
-                    data.append('product_image', imageFile)
-                }
+                // Append multiple images
+                imageFiles.forEach((file, index) => {
+                    data.append(`product_images`, file)
+                })
             } else {
                 data.append('price_range', formData.price_range)
                 data.append('duration', formData.duration)
                 data.append('is_active', initialData ? String(initialData.is_active) : "true")
-                if (imageFile) {
-                    data.append('service_image', imageFile)
-                }
+                // Append multiple images
+                imageFiles.forEach((file, index) => {
+                    data.append(`service_images`, file)
+                })
             }
 
             if (initialData?.id) {
@@ -472,12 +492,13 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
 
             {/* Image Upload */}
             <div className="space-y-2">
-                <Label>{type === "products" ? "Product" : "Service"} Image</Label>
-                <div className="flex items-center gap-4">
+                <Label>{type === "products" ? "Product" : "Service"} Images (Max {MAX_IMAGES})</Label>
+                <div className="space-y-3">
                     <input
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleFileChange}
                         className="hidden"
                     />
@@ -486,23 +507,41 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
                         className="h-12"
+                        disabled={imageFiles.length >= MAX_IMAGES}
                     >
                         <ImageIcon className="h-4 w-4 mr-2" />
-                        {imagePreview ? "Change Image" : "Upload Image"}
+                        {imageFiles.length >= MAX_IMAGES
+                            ? `Maximum ${MAX_IMAGES} images`
+                            : `Upload Images (${imageFiles.length}/${MAX_IMAGES})`}
                     </Button>
-                    {imagePreview && (
-                        <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
-                            <Image
-                                src={imagePreview.startsWith('data:') ? imagePreview : `/api${imagePreview}`}
-                                alt="Preview"
-                                fill
-                                className="object-cover"
-                                unoptimized
-                            />
+
+                    {/* Image Previews Grid */}
+                    {imagePreviews.length > 0 && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {imagePreviews.map((preview, index) => (
+                                <div key={index} className="relative w-full aspect-square rounded-lg overflow-hidden border group">
+                                    <Image
+                                        src={preview.startsWith('data:') ? preview : `/api${preview}`}
+                                        alt={`Preview ${index + 1}`}
+                                        fill
+                                        className="object-cover"
+                                        unoptimized
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveImage(index)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
-                <p className="text-xs text-gray-500">JPG, PNG or GIF (max 5MB)</p>
+                <p className="text-xs text-gray-500">JPG, PNG or GIF (max 5MB per image)</p>
             </div>
 
             {type === "products" ? (
