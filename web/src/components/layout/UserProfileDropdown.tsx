@@ -271,7 +271,7 @@ export function UserProfileDropdown() {
                         <DropdownMenuItem asChild>
                             <Link href="/dashboard" className="cursor-pointer">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                                Dashboard
+                                My Dashboard
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -307,7 +307,7 @@ export function UserProfileDropdown() {
                 <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
-                        Settings
+                        Personal Settings
                     </Link>
                 </DropdownMenuItem>
 
