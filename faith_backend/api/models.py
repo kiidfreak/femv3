@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import uuid
 
@@ -100,11 +102,63 @@ class Business(models.Model):
         db_column='business_logo_url'
     )
     
+    REPORT_FREQUENCIES = [
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('never', 'Never'),
+    ]
+    report_frequency = models.CharField(max_length=10, choices=REPORT_FREQUENCIES, default='weekly')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def trust_score(self):
+        """Calculate trust score out of 100"""
+        # 1. Church Verification (40 points)
+        verification_score = 40 if self.is_verified else 0
+        
+        # 2. Profile Completion (20 points max)
+        profile_pts = 0
+        if self.description: profile_pts += 1
+        if self.phone: profile_pts += 1
+        if self.email: profile_pts += 1
+        if self.website: profile_pts += 1
+        if self.business_logo: profile_pts += 1
+        if self.business_image: profile_pts += 1
+        if self.address: profile_pts += 1
+        if self.products.exists() or self.services.exists(): profile_pts += 1
+        
+        # Out of 8 fields, scale to 20
+        profile_score = (profile_pts / 8) * 20
+        
+        # 3. Community Reviews (25 points max)
+        # 5 stars * 10+ reviews = 25 pts
+        review_vol_factor = min(self.review_count, 10) / 10
+        reviews_score = float(self.rating) * review_vol_factor * 5 # (5 * 1.0 * 5 = 25)
+        
+        # 4. Account Age (15 points max)
+        # 1 year = 15 pts
+        age_score = 0
+        if self.created_at:
+            days = (timezone.now() - self.created_at).days
+            age_score = min(15, (days / 365) * 15)
+            
+        total = verification_score + profile_score + reviews_score + age_score
+        return round(min(100, total))
+
     class Meta:
         db_table = 'business_business'
+
+class BusinessImage(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='businesses/gallery/', db_column='image_url')
+    caption = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'business_image'
+        ordering = ['-created_at']
 
 class Service(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='services')
@@ -136,12 +190,13 @@ class Product(models.Model):
 class Review(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
-    # product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
-    # service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='reviews', blank=True, null=True)
     rating = models.IntegerField()
     review_text = models.TextField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'business_review'
@@ -173,4 +228,3 @@ from .roles import Role, UserRole
 from .notification_models import Notification, NotificationPreference
 from .analytics_models import PageView
 from .campaign_models import Campaign, CampaignAction, BusinessCampaignProgress, CompletedAction, Reward, AwardedReward, FeaturedBusiness
-from .trading_models import TradingPlan, TradingAccount, Trade

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Business, Category, Service, Product, Review, Favorite
+from .models import User, Business, BusinessImage, Category, Service, Product, Review, Favorite
 from django.contrib.auth.models import Permission
 from .roles import Role, UserRole
 
@@ -61,10 +61,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.first_name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
 
     class Meta:
         model = Review
-        fields = ['id', 'business', 'user_name', 'rating', 'review_text', 'is_verified', 'created_at']
+        fields = [
+            'id', 'business', 'user_name', 'rating', 'review_text', 
+            'is_verified', 'created_at', 'product', 'service',
+            'product_name', 'service_name'
+        ]
 
 class BusinessListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -92,12 +98,20 @@ class BusinessListSerializer(serializers.ModelSerializer):
             return obj.favorited_by.filter(user=request.user).exists()
         return False
 
+class BusinessImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.ImageField(source='image', read_only=True)
+    
+    class Meta:
+        model = BusinessImage
+        fields = ['id', 'image', 'image_url', 'caption', 'created_at']
+
 class BusinessSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     owner_name = serializers.CharField(source='user.first_name', read_only=True)
     services = ServiceSerializer(many=True, read_only=True)
     products = ProductSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
+    images = BusinessImageSerializer(many=True, read_only=True)
     view_count = serializers.SerializerMethodField()
 
     def get_view_count(self, obj):
@@ -115,11 +129,11 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             'id', 'business_name', 'description', 'address', 
-            'phone', 'email', 'website',
+            'phone', 'email', 'website', 'latitude', 'longitude',
             'category', 'category_name', 'owner_name', 'rating', 'review_count', 'view_count',
-            'is_verified', 'is_featured', 'services', 'products', 'reviews', 
+            'is_verified', 'is_featured', 'services', 'products', 'reviews', 'images',
             'business_image', 'business_logo', 'business_image_url', 'business_logo_url',
-            'is_favorite'
+            'is_favorite', 'report_frequency'
         ]
 
     is_favorite = serializers.SerializerMethodField()
