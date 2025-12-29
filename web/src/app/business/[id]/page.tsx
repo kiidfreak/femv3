@@ -58,6 +58,7 @@ interface Product {
     product_image_url?: string
     in_stock: boolean
     is_active: boolean
+    is_favorite?: boolean
 }
 
 interface Service {
@@ -68,6 +69,7 @@ interface Service {
     duration: string
     service_image_url?: string
     is_active: boolean
+    is_favorite?: boolean
 }
 
 interface Review {
@@ -206,6 +208,25 @@ export default function BusinessDetailPage() {
                     ...offering,
                     is_favorite: data.is_favorite
                 })
+
+                // Update the offering in the main business state so the card also updates
+                if (business) {
+                    const updatedProducts = business.products?.map(p =>
+                        p.id === offering.id && offering.type === 'product'
+                            ? { ...p, is_favorite: data.is_favorite }
+                            : p
+                    )
+                    const updatedServices = business.services?.map(s =>
+                        s.id === offering.id && offering.type === 'service'
+                            ? { ...s, is_favorite: data.is_favorite }
+                            : s
+                    )
+                    setBusiness({
+                        ...business,
+                        products: updatedProducts,
+                        services: updatedServices
+                    })
+                }
             }
         } catch (error) {
             toast.error("Failed to update favorites")
@@ -247,6 +268,7 @@ export default function BusinessDetailPage() {
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                                 priority
+                                unoptimized
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
@@ -300,6 +322,7 @@ export default function BusinessDetailPage() {
                                         alt={img.caption || 'Gallery image'}
                                         fill
                                         className="object-cover transition-transform duration-500 group-hover/img:scale-110"
+                                        unoptimized
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end p-6">
                                         <p className="text-white text-sm font-bold">{img.caption || business.business_name}</p>
@@ -322,6 +345,7 @@ export default function BusinessDetailPage() {
                                                 alt={`${business.business_name} logo`}
                                                 fill
                                                 className="object-contain p-2"
+                                                unoptimized
                                             />
                                         ) : (
                                             <div className="flex flex-col items-center justify-center">
@@ -427,13 +451,28 @@ export default function BusinessDetailPage() {
                                                 alt={product.name}
                                                 fill
                                                 className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                                unoptimized
                                             />
+                                            {/* Review This Button - Center */}
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <Button variant="secondary" size="sm" className="font-bold">
                                                     <MessageSquare className="h-4 w-4 mr-2" />
                                                     Review This
                                                 </Button>
                                             </div>
+                                            {/* Heart Icon - Top Right */}
+                                            <button
+                                                className={cn(
+                                                    "absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full transition-all hover:bg-white z-20",
+                                                    product.is_favorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                                )}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    toggleOfferingFavorite({ ...product, type: 'product' })
+                                                }}
+                                            >
+                                                <Heart className={cn("h-5 w-5", product.is_favorite ? "fill-red-500 text-red-500" : "text-gray-600")} />
+                                            </button>
                                         </div>
                                     )}
                                     <CardHeader className="p-4">
@@ -479,10 +518,25 @@ export default function BusinessDetailPage() {
                                                 alt={service.name}
                                                 fill
                                                 className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                                unoptimized
                                             />
+                                            {/* Review Icon - Center */}
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <MessageSquare className="h-6 w-6 text-white" />
                                             </div>
+                                            {/* Heart Icon - Top Right */}
+                                            <button
+                                                className={cn(
+                                                    "absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full transition-all hover:bg-white z-20",
+                                                    service.is_favorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                                )}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    toggleOfferingFavorite({ ...service, type: 'service' })
+                                                }}
+                                            >
+                                                <Heart className={cn("h-5 w-5", service.is_favorite ? "fill-red-500 text-red-500" : "text-gray-600")} />
+                                            </button>
                                         </div>
                                     )}
                                     <div className="flex-1 flex flex-col">
@@ -641,6 +695,7 @@ export default function BusinessDetailPage() {
                                             alt={selectedOffering.name}
                                             fill
                                             className="object-contain"
+                                            unoptimized
                                         />
                                     ) : (
                                         <Package className="h-20 w-20 text-gray-700" />
@@ -650,6 +705,21 @@ export default function BusinessDetailPage() {
                                             {selectedOffering.type}
                                         </Badge>
                                     </div>
+
+                                    {/* Top Right Heart Action */}
+                                    <button
+                                        onClick={() => toggleOfferingFavorite(selectedOffering)}
+                                        className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all group/fav"
+                                    >
+                                        <Heart
+                                            className={cn(
+                                                "h-5 w-5 transition-colors",
+                                                selectedOffering.is_favorite
+                                                    ? "fill-red-500 text-red-500"
+                                                    : "text-gray-400 group-hover/fav:text-red-500"
+                                            )}
+                                        />
+                                    </button>
                                 </div>
 
                                 {/* Details Section */}

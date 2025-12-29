@@ -476,17 +476,23 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         if not any([business, product, service]):
             raise DRFValidationError({'error': 'You must specify either a business, product, or service.'})
 
-        existing = Favorite.objects.filter(
-            user=self.request.user,
-            business=business,
-            product=product,
-            service=service
-        ).exists()
+        # Ensure business is populated if favoriting a product/service
+        if product and not business:
+            business = product.business
+        elif service and not business:
+            business = service.business
 
-        if existing:
+        existing_filter = {
+            'user': self.request.user,
+            'business': business,
+            'product': product,
+            'service': service
+        }
+
+        if Favorite.objects.filter(**existing_filter).exists():
             raise DRFValidationError({'error': 'Already in favorites'})
 
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user, business=business)
     
     @action(detail=False, methods=['post'])
     def toggle(self, request):
@@ -497,26 +503,33 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         if not any([business_id, product_id, service_id]):
             return Response({'error': 'Missing identifier'}, status=400)
 
-        # Build exact filter to avoid deleting "all business favorites" when toggling a product
         filter_params = {'user': request.user}
+        
         if business_id: 
             filter_params['business_id'] = business_id
             filter_params['product_id'] = None
             filter_params['service_id'] = None
         elif product_id:
-            filter_params['product_id'] = product_id
-            filter_params['business_id'] = None
-            filter_params['service_id'] = None
+            try:
+                product = Product.objects.get(id=product_id)
+                filter_params['product_id'] = product_id
+                filter_params['business_id'] = product.business_id
+                filter_params['service_id'] = None
+            except Product.DoesNotExist:
+                return Response({'error': 'Product not found'}, status=404)
         elif service_id:
-            filter_params['service_id'] = service_id
-            filter_params['business_id'] = None
-            filter_params['product_id'] = None
+            try:
+                service = Service.objects.get(id=service_id)
+                filter_params['service_id'] = service_id
+                filter_params['business_id'] = service.business_id
+                filter_params['product_id'] = None
+            except Service.DoesNotExist:
+                return Response({'error': 'Service not found'}, status=404)
 
         fav = Favorite.objects.filter(**filter_params).first()
         if fav:
             fav.delete()
             return Response({'status': 'removed', 'is_favorite': False})
         else:
-            # Clear other fields for this specific favorite type
             Favorite.objects.create(**filter_params)
             return Response({'status': 'added', 'is_favorite': True})
