@@ -175,15 +175,6 @@ export function UserProfileDropdown() {
                                         Continue Setup <ChevronRight className="h-3 w-3 ml-1" />
                                     </Button>
                                 </Link>
-                            ) : (!user.is_verified && user.user_type === 'business_owner') ? (
-                                <Link href="/admin/verifications/apply">
-                                    <Button
-                                        size="sm"
-                                        className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs"
-                                    >
-                                        Verify Business <ChevronRight className="h-3 w-3 ml-1" />
-                                    </Button>
-                                </Link>
                             ) : (
                                 <Link href="/settings">
                                     <Button
@@ -218,13 +209,10 @@ export function UserProfileDropdown() {
                                     <span className="font-bold">Church Verified</span>
                                 </div>
                             ) : (
-                                <Link href="/admin/verifications/apply">
-                                    <div className="flex items-center gap-2 text-xs text-orange-600 cursor-pointer hover:text-orange-700">
-                                        <AlertCircle className="h-4 w-4" />
-                                        <span className="font-bold">Apply for Verification</span>
-                                        <ChevronRight className="h-3 w-3 ml-auto" />
-                                    </div>
-                                </Link>
+                                <div className="flex items-center gap-2 text-xs text-orange-600">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <span className="font-bold">Verification Pending</span>
+                                </div>
                             )}
                         </div>
                     </>
