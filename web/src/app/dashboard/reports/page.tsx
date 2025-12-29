@@ -172,9 +172,9 @@ export default function ReportsPage() {
                     <CardHeader className="bg-[#1A1A1A] text-white">
                         <CardTitle className="flex items-center gap-2">
                             <Globe className="h-5 w-5 text-orange-400" />
-                            Traffic Sources
+                            Referral Sources
                         </CardTitle>
-                        <CardDescription className="text-gray-400">Where your visitors come from</CardDescription>
+                        <CardDescription className="text-gray-400">Where your customers are coming from</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="h-[250px] w-full">
@@ -274,8 +274,8 @@ export default function ReportsPage() {
                         <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/10">
                             <h4 className="text-lg font-bold mb-2">Pro Tip: Platinum Status</h4>
                             <p className="text-sm text-gray-400">Businesses with a Trust Score above 90% receive a Platinum badge and are prioritized in community-wide searches.</p>
-                            <Button className="mt-4 w-full bg-white text-black hover:bg-gray-200 font-black rounded-xl">
-                                Verify Now
+                            <Button disabled className="mt-4 w-full bg-gray-100 text-gray-400 hover:bg-gray-100 font-black rounded-xl cursor-not-allowed">
+                                Coming Soon
                             </Button>
                         </div>
                     </CardContent>
@@ -293,15 +293,7 @@ export default function ReportsPage() {
                     <CardContent>
                         <div className="h-[350px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={stats.view_trends || [
-                                    { date: 'Mon', views: 40 },
-                                    { date: 'Tue', views: 35 },
-                                    { date: 'Wed', views: 55 },
-                                    { date: 'Thu', views: 75 },
-                                    { date: 'Fri', views: 60 },
-                                    { date: 'Sat', views: 90 },
-                                    { date: 'Sun', views: 110 },
-                                ]}>
+                                <AreaChart data={stats.view_trends || []}>
                                     <defs>
                                         <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#F58220" stopOpacity={0.3} />
