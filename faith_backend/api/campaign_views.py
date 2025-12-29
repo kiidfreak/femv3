@@ -148,6 +148,15 @@ def should_award_action(business, action):
         return business.review_count >= 5
     elif action_type == 'add_social_links':
         return bool(business.facebook_url or business.instagram_url or business.twitter_url)
+    elif action_type == 'add_profile_pic':
+        return bool(business.user.profile_image)
+    elif action_type == 'add_offering_pic':
+        # Check if any product or service has an image
+        has_prod_img = business.products.exclude(product_image__isnull=True).exclude(product_image='').exists()
+        has_serv_img = business.services.exclude(service_image__isnull=True).exclude(service_image='').exists()
+        return has_prod_img or has_serv_img
+    elif action_type == 'login':
+        return True
     elif action_type == 'complete_profile':
         return calculate_profile_completion(business) >= 100
     
@@ -160,8 +169,10 @@ def calculate_profile_completion(business):
     completed = sum(1 for field in fields if getattr(business, field, None))
     has_offering = business.products.exists() or business.services.exists()
     has_socials = bool(business.facebook_url or business.instagram_url)
+    has_profile_pic = bool(business.user.profile_image)
     
-    return int(((completed + has_offering + has_socials) / 9) * 100)
+    # 10 checks now
+    return int(((completed + has_offering + has_socials + has_profile_pic) / 10) * 100)
 
 def award_action(business, progress, action):
     """Award points and create notification"""

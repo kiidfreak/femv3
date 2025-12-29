@@ -12,6 +12,7 @@ from .serializers import (
     UserSerializer, BusinessSerializer, BusinessListSerializer, CategorySerializer,
     ServiceSerializer, ProductSerializer, ReviewSerializer, FavoriteSerializer
 )
+from .campaign_views import check_and_award_campaign_actions
 from .validators import (
     validate_one_business_per_user,
     validate_product_limit,
@@ -140,9 +141,14 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
         try:
             validate_one_business_per_user(self.request.user)
-            serializer.save(user=self.request.user)
+            business = serializer.save(user=self.request.user)
+            check_and_award_campaign_actions(business)
         except (DjangoValidationError, DRFValidationError) as e:
             raise DRFValidationError({'error': str(e)})
+
+    def perform_update(self, serializer):
+        business = serializer.save()
+        check_and_award_campaign_actions(business)
     
     @action(detail=False, methods=['get'])
     def my_business(self, request):
@@ -186,6 +192,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             image=image_file,
             caption=request.data.get('caption', '')
         )
+        check_and_award_campaign_actions(business)
         
         return Response(BusinessImageSerializer(business_image).data, status=status.HTTP_201_CREATED)
 
@@ -403,11 +410,16 @@ class ServiceViewSet(viewsets.ModelViewSet):
                 raise DRFValidationError({'error': 'You must create a business profile before adding services.'})
                 
             validate_service_limit(business)
-            serializer.save(business=business)
+            service = serializer.save(business=business)
+            check_and_award_campaign_actions(service.business)
         except (DjangoValidationError, DRFValidationError) as e:
             raise DRFValidationError({'error': str(e)})
         except Exception as e:
             raise DRFValidationError({'error': f'Database error: {str(e)}'})
+
+    def perform_update(self, serializer):
+        service = serializer.save()
+        check_and_award_campaign_actions(service.business)
 
 class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
@@ -436,11 +448,16 @@ class ProductViewSet(viewsets.ModelViewSet):
                 raise DRFValidationError({'error': 'You must create a business profile before adding products.'})
                 
             validate_product_limit(business)
-            serializer.save(business=business)
+            product = serializer.save(business=business)
+            check_and_award_campaign_actions(product.business)
         except (DjangoValidationError, DRFValidationError) as e:
             raise DRFValidationError({'error': str(e)})
         except Exception as e:
             raise DRFValidationError({'error': f'Database error: {str(e)}'})
+
+    def perform_update(self, serializer):
+        product = serializer.save()
+        check_and_award_campaign_actions(product.business)
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.select_related('user', 'business', 'business__category').all()

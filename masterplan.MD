@@ -25,37 +25,13 @@ This master document links to all planning documents for the Faith Connect v3 re
 
 ## 📚 Planning Documents
 
-### 1. Architecture & Technical Design
-- [01-architecture-vision.md](#) - System architecture overview
-- [02-api-redesign.md](#) - New API structure (80→32 endpoints)
-- [03-data-models.md](#) - Database schema with trust layer
-- [04-tech-stack.md](#) - Technology decisions and rationale
+### 1. Strategy & Tutorials
+- [MARKETING_CAMPAIGN_TUTORIAL.md](MARKETING_CAMPAIGN_TUTORIAL.md) - How to run growth campaigns
+- [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) - Production deployment guide
 
-### 2. Frontend Planning
-- [05-frontend-architecture.md](#) - Next.js 14 App Router structure
-- [06-component-hierarchy.md](#) - Component tree and patterns
-- [07-ux-improvements.md](#) - UX fixes and empty state handling
-- [08-design-system.md](#) - Tailwind + shadcn/ui setup
-
-### 3. Backend Planning
-- [09-backend-structure.md](#) - FastAPI domain organization
-- [10-event-system.md](#) - Event-driven analytics
-- [11-media-upload.md](#) - Token-based upload system
-- [12-trust-verification.md](#) - Verification workflow
-
-### 4. Migration & Deployment
-- [13-migration-strategy.md](#) - Data migration from v2→v3
-- [14-deployment-plan.md](#) - Staging and production rollout
-- [15-testing-strategy.md](#) - Testing approach
-
-### 5. Business & Product
-- [16-trust-system.md](#) - Trust badges and scoring
-- [17-monetization.md](#) - Revenue model (free→verified→premium)
-- [18-growth-strategy.md](#) - Launch and scaling plan
-
-### 6. Development Workflow
-- [19-development-phases.md](#) - 3-month roadmap
-- [20-build-checklist.md](#) - Step-by-step implementation guide
+### 2. Implementation Progress
+- [README.md](README.md) - System overview and technical stack
+- [masterplan.MD](masterplan.MD) - Current progress and roadmap (This doc)
 
 ---
 

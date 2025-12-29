@@ -67,6 +67,9 @@ class CampaignAction(models.Model):
         ('get_first_review', 'Receive First Review'),
         ('get_5_reviews', 'Receive 5 Reviews'),
         ('add_social_links', 'Add Social Media Links'),
+        ('add_profile_pic', 'Add Profile Picture'),
+        ('add_offering_pic', 'Add First Offering Image'),
+        ('login', 'Daily Login Reward'),
         ('complete_profile', 'Complete 100% of Profile'),
     )
     

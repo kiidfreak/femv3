@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from .models import PendingUser
+from .campaign_views import check_and_award_campaign_actions
 
 User = get_user_model()
 
@@ -223,6 +224,11 @@ class VerifyOTPView(APIView):
         
         refresh = RefreshToken.for_user(user)
         
+        # Trigger campaign checks on login if they have a business
+        business = user.businesses.first()
+        if business:
+            check_and_award_campaign_actions(business)
+        
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
@@ -294,6 +300,11 @@ class UpdateProfileView(APIView):
             user.profile_image = request.FILES['profile_image']
             
         user.save()
+        
+        # Trigger campaign checks if they have a business
+        business = user.businesses.first()
+        if business:
+            check_and_award_campaign_actions(business)
             
         return Response({
             'message': 'Profile updated',

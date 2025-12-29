@@ -229,7 +229,7 @@ export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { sta
                             </div>
 
                             {/* Floating Badge */}
-                            <div className="absolute -left-12 bottom-20 bg-white p-5 rounded-3xl shadow-2xl shadow-orange-100 border border-gray-100 flex items-center gap-4 animate-bounce-slow">
+                            <div className="absolute -left-12 bottom-45 bg-white p-5 rounded-3xl shadow-2xl shadow-orange-100 border border-gray-100 flex items-center gap-4 animate-bounce-slow">
                                 <div className="p-1">
                                     <ShipLogo className="h-16 w-16" />
                                 </div>
