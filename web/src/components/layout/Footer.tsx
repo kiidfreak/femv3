@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { ShipLogo, TrustShield } from "@/components/branding/BrandIcons";
 import Image from "next/image";
 
 export function Footer() {
@@ -10,15 +11,7 @@ export function Footer() {
                     {/* Brand Section */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            {/* Brand Logo */}
-                            <div className="relative w-10 h-10">
-                                <Image
-                                    src="/logo.png"
-                                    alt="Faith Connect Logo"
-                                    fill
-                                    className="object-contain"
-                                />
-                            </div>
+                            <ShipLogo className="h-10 w-10" />
                             <span className="font-bold text-xl">Faith Connect</span>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed">

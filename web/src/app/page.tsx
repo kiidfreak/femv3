@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Package
 } from "lucide-react";
+import { ShipLogo, TrustShield, ConnectionIcon } from "@/components/branding/BrandIcons";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -137,6 +138,9 @@ export default function Home() {
           <p className="text-gray-600">
             Discover trusted businesses within our faith community. From restaurants to tech services, find everything you need while supporting fellow believers.
           </p>
+          <div className="mt-4 flex justify-center opacity-50">
+            <ConnectionIcon className="w-8 h-8" />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 justify-center max-w-7xl mx-auto">
@@ -250,8 +254,17 @@ export default function Home() {
 
       {/* Community Stats Section */}
       <section className="py-24 bg-white relative overflow-hidden">
-        {/* Background decorative blob */}
+        {/* Background decorative blob and Icons */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-orange-100/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 left-10 opacity-10 rotate-12 scale-150">
+          <ShipLogo className="w-32 h-32" />
+        </div>
+        <div className="absolute bottom-10 right-10 opacity-10 -rotate-12 scale-150">
+          <TrustShield className="w-32 h-32" />
+        </div>
+        <div className="absolute top-1/2 right-20 -translate-y-1/2 opacity-10 rotate-45">
+          <ConnectionIcon className="w-24 h-24" />
+        </div>
 
         <div className="container relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -327,6 +340,42 @@ export default function Home() {
                   <div className="h-48 bg-gray-200 rounded-2xl bg-[url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center shadow-lg" />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Branding Showcase / Values Section */}
+      <section className="py-24 bg-[#FAF9F6] border-y border-gray-100 overflow-hidden">
+        <div className="container overflow-hidden">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-black text-[#1A1A1A]">Built on Faith & Connection</h2>
+            <p className="text-gray-500 mt-2 font-medium">The core values that guide our platform development</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-500">
+              <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-orange-100/50 mb-6 border border-white">
+                <ShipLogo className="w-24 h-24" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">Safe Passage</h3>
+              <p className="text-sm text-gray-500 line-clamp-3">Navigating the marketplace with trust and security, ensuring your support reaches genuine believers.</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-500 delay-75">
+              <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-orange-100/50 mb-6 border border-white">
+                <TrustShield className="w-24 h-24" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">Verified Trust</h3>
+              <p className="text-sm text-gray-500 line-clamp-3">Rigorous church-backed verification processes that build confidence in every transaction.</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center group translate-y-0 hover:-translate-y-2 transition-transform duration-500 delay-150">
+              <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-orange-100/50 mb-6 border border-white">
+                <ConnectionIcon className="w-24 h-24" />
+              </div>
+              <h3 className="text-xl font-bold text-[#1A1A1A] mb-3">Kingdom Network</h3>
+              <p className="text-sm text-gray-500 line-clamp-3">Connecting individuals and businesses to strengthen the community through mutual support.</p>
             </div>
           </div>
         </div>

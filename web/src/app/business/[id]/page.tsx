@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-    MapPin, Star, ShieldCheck, Heart, Share2,
-    Package, Wrench, MessageSquare, Phone, Mail, Store,
-    Image as ImageIcon, ChevronLeft
+    ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Globe, Heart,
+    Image as ImageIcon, Info, MapPin, MessageCircle, MessageSquare, Mail, Package, Phone,
+    Search, Share2, ShieldCheck, Star, Store, Wrench
 } from "lucide-react"
+import { ShipLogo } from "@/components/branding/BrandIcons"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { apiClient, getImageUrl } from "@/lib/api-client"
@@ -263,7 +264,7 @@ export default function BusinessDetailPage() {
                     {business.business_image_url ? (
                         <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl">
                             <Image
-                                src={getImageUrl(business.business_image_url) || business.business_image_url}
+                                src={getImageUrl(business.business_image_url) || ""}
                                 alt={`${business.business_name} banner`}
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -277,8 +278,8 @@ export default function BusinessDetailPage() {
                                     <div className="flex items-center gap-3">
                                         <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-lg">{business.business_name}</h1>
                                         {business.is_verified && (
-                                            <div className="bg-white/20 backdrop-blur-md p-1.5 rounded-full border border-white/30">
-                                                <ShieldCheck className="h-6 w-6 text-green-400" />
+                                            <div className="bg-orange-400/20 p-2 rounded-xl backdrop-blur-md border border-white/20">
+                                                <ShipLogo className="h-6 w-6" />
                                             </div>
                                         )}
                                     </div>
@@ -318,7 +319,7 @@ export default function BusinessDetailPage() {
                                     className="relative flex-shrink-0 w-72 md:w-96 aspect-[4/3] rounded-3xl overflow-hidden shadow-xl snap-center group/img"
                                 >
                                     <Image
-                                        src={getImageUrl(img.image)}
+                                        src={getImageUrl(img.image) || ""}
                                         alt={img.caption || 'Gallery image'}
                                         fill
                                         className="object-cover transition-transform duration-500 group-hover/img:scale-110"
@@ -341,7 +342,7 @@ export default function BusinessDetailPage() {
                                     <div className="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden relative shadow-sm">
                                         {business.business_logo_url ? (
                                             <Image
-                                                src={getImageUrl(business.business_logo_url) || business.business_logo_url}
+                                                src={getImageUrl(business.business_logo_url) || ""}
                                                 alt={`${business.business_name} logo`}
                                                 fill
                                                 className="object-contain p-2"
@@ -691,7 +692,7 @@ export default function BusinessDetailPage() {
                                 <div className="relative w-full md:w-3/5 bg-gray-900 aspect-video md:aspect-auto flex items-center justify-center">
                                     {(selectedOffering.product_image_url || selectedOffering.service_image_url) ? (
                                         <Image
-                                            src={getImageUrl(selectedOffering.product_image_url || selectedOffering.service_image_url)}
+                                            src={getImageUrl(selectedOffering.product_image_url || selectedOffering.service_image_url) || ""}
                                             alt={selectedOffering.name}
                                             fill
                                             className="object-contain"

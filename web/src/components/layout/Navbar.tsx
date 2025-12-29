@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Menu, X, Home, Store, Info, PhoneCall, Package, MessageSquare } from "lucide-react"
+import { ShipLogo } from "@/components/branding/BrandIcons"
 import {
   Dialog,
   DialogContent,
@@ -97,10 +98,12 @@ export function Navbar() {
             <DialogContent className="fixed inset-y-0 right-0 left-auto h-full w-[300px] translate-x-0 translate-y-0 border-l bg-white p-0 shadow-2xl transition-transform data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:rounded-none">
               <div className="flex flex-col h-full">
                 <div className="p-6 border-b flex items-center justify-between">
-                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <span className="text-[#F58220]">Faith</span> Connect
+                  <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                    <ShipLogo className="h-10 w-10" />
+                    <div>
+                      <span className="text-[#F58220]">Faith</span> Connect
+                    </div>
                   </DialogTitle>
-
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">

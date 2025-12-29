@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, ShieldCheck, Users, Globe, MapPin, Search as SearchIcon, Store, Package } from "lucide-react"
+import { ShipLogo, TrustShield, ConnectionIcon } from "@/components/branding/BrandIcons"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -229,8 +230,8 @@ export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { sta
 
                             {/* Floating Badge */}
                             <div className="absolute -left-12 bottom-20 bg-white p-5 rounded-3xl shadow-2xl shadow-orange-100 border border-gray-100 flex items-center gap-4 animate-bounce-slow">
-                                <div className="bg-orange-100 p-4 rounded-2xl">
-                                    <ShieldCheck className="h-8 w-8 text-[#F58220]" />
+                                <div className="p-1">
+                                    <ShipLogo className="h-16 w-16" />
                                 </div>
                                 <div className="pr-4">
                                     <div className="text-xl font-black text-[#1A1A1A]">Church Verified</div>
