@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
     DropdownMenu,
@@ -19,12 +19,38 @@ import {
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
-import { getImageUrl } from "@/lib/api-client"
+import { getImageUrl, apiClient } from "@/lib/api-client"
 
 export function UserProfileDropdown() {
     const { user, logout } = useAuth()
+    const [businessLogo, setBusinessLogo] = useState<string | null>(null)
 
     if (!user) return null
+
+    // Fetch business logo for business owners
+    useEffect(() => {
+        const fetchBusinessLogo = async () => {
+            if (user.user_type === 'business_owner' && user.has_business_profile) {
+                try {
+                    const res = await apiClient.businesses.myBusiness()
+                    if (res.ok) {
+                        const data = await res.json()
+                        if (data.business_logo_url) {
+                            setBusinessLogo(data.business_logo_url)
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch business logo:", error)
+                }
+            }
+        }
+        fetchBusinessLogo()
+    }, [user])
+
+    // Determine which image to show: business logo for business owners, profile image for others
+    const displayImage = user.user_type === 'business_owner' && businessLogo
+        ? businessLogo
+        : user.profile_image_url
 
     // Helper function to get display label for user type
     const getUserTypeLabel = (userType: string) => {
@@ -39,16 +65,34 @@ export function UserProfileDropdown() {
 
     // Calculate profile completion
     const getProfileCompletion = () => {
+        // For business owners, track business profile completion
+        if (user.user_type === 'business_owner') {
+            const steps = [
+                { label: 'Business Name', description: 'Set your business name', completed: !!user.has_business_profile },
+                { label: 'Business Logo', description: 'Upload your business logo', completed: !!businessLogo },
+                { label: 'Contact Info', description: 'Add phone and email', completed: !!user.has_business_profile },
+                { label: 'Business Description', description: 'Describe your business', completed: !!user.has_business_profile },
+                { label: 'Church Verification', description: 'Get verified by the church leadership', completed: !!user.is_verified },
+            ]
+
+            const completedCount = steps.filter(s => s.completed).length
+            const totalCount = steps.length
+
+            return {
+                percentage: Math.round((completedCount / totalCount) * 100),
+                isComplete: completedCount === totalCount,
+                completed: completedCount,
+                total: totalCount,
+                steps
+            }
+        }
+
+        // For community members, track personal profile
         const steps = [
             { label: 'Basic Info', description: 'Add your first name to your profile', completed: !!user.first_name },
             { label: 'Email Address', description: 'Ensure your email is correctly set', completed: !!user.email },
             { label: 'Phone Verification', description: 'Verify your identity via OTP', completed: !!user.phone_verified },
         ]
-
-        if (user.user_type === 'business_owner') {
-            steps.push({ label: 'Business Profile', description: 'Provide details about your business', completed: !!user.has_business_profile })
-            steps.push({ label: 'Church Verification', description: 'Get verified by the church leadership', completed: !!user.is_verified })
-        }
 
         const completedCount = steps.filter(s => s.completed).length
         const totalCount = steps.length
@@ -70,8 +114,8 @@ export function UserProfileDropdown() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 relative">
                     <div className="h-10 w-10 rounded-full bg-[#F58220]/10 flex items-center justify-center relative shadow-sm border border-[#F58220]/20 overflow-hidden">
-                        {user.profile_image_url ? (
-                            <Image src={getImageUrl(user.profile_image_url) || user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                        {displayImage ? (
+                            <Image src={getImageUrl(displayImage) || displayImage} alt={user.first_name || "Profile"} fill className="object-cover" unoptimized />
                         ) : (
                             <User className="h-5 w-5 text-[#F58220]" />
                         )}
@@ -106,8 +150,8 @@ export function UserProfileDropdown() {
                 <div className="p-4 border-b">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="h-12 w-12 rounded-full bg-[#F58220]/10 flex items-center justify-center overflow-hidden relative border border-[#F58220]/20">
-                            {user.profile_image_url ? (
-                                <Image src={getImageUrl(user.profile_image_url) || user.profile_image_url} alt={user.first_name || "Profile"} fill className="object-cover" />
+                            {displayImage ? (
+                                <Image src={getImageUrl(displayImage) || displayImage} alt={user.first_name || "Profile"} fill className="object-cover" unoptimized />
                             ) : (
                                 <User className="h-6 w-6 text-[#F58220]" />
                             )}

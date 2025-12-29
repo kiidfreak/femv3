@@ -73,6 +73,25 @@ export default function BusinessSettingsPage() {
                             cleanDescription = cleanDescription.substring(0, index).trim()
                         }
 
+                        // Parse address field back into components if it's concatenated
+                        // Format from onboarding: "street, city, county"
+                        let street = ""
+                        let city = ""
+                        let county = ""
+
+                        const fullAddress = data.address || ""
+                        if (fullAddress) {
+                            const parts = fullAddress.split(", ")
+                            if (parts.length >= 3) {
+                                street = parts[0]
+                                city = parts[1]
+                                county = parts[2]
+                            } else {
+                                // If not in expected format, just use it as street
+                                street = fullAddress
+                            }
+                        }
+
                         setFormData({
                             business_name: data.business_name || "",
                             description: cleanDescription,
@@ -80,9 +99,9 @@ export default function BusinessSettingsPage() {
                             phone: data.phone || "",
                             email: data.email || "",
                             website: data.website || "",
-                            address: data.address || "",
-                            city: "",  // Backend doesn't have separate city field
-                            county: ""  // Backend doesn't have separate county field
+                            address: street,
+                            city: city,
+                            county: county
                         })
                         if (data.business_logo_url) {
                             setLogoPreview(data.business_logo_url)
@@ -215,6 +234,7 @@ export default function BusinessSettingsPage() {
                                                 alt="Logo"
                                                 fill
                                                 className="object-cover"
+                                                unoptimized
                                             />
                                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <Upload className="h-6 w-6 text-white" />
