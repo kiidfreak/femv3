@@ -173,5 +173,26 @@ export const apiClient = {
             headers: getHeaders(),
             body: JSON.stringify(data)
         }),
+    },
+
+    // 8. Trading
+    trading: {
+        plans: {
+            list: () => fetch(`${API_BASE_URL}/trading/plans/`, { headers: getHeaders() }),
+        },
+        accounts: {
+            list: () => fetch(`${API_BASE_URL}/trading/accounts/`, { headers: getHeaders() }),
+            get: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/`, { headers: getHeaders() }),
+            create: (planId: number) => fetch(`${API_BASE_URL}/trading/accounts/`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ plan: planId })
+            }),
+            getTrades: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/trades/`, { headers: getHeaders() }),
+            sync: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/sync/`, {
+                method: 'POST',
+                headers: getHeaders()
+            }),
+        }
     }
 }

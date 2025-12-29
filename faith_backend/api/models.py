@@ -173,3 +173,4 @@ from .roles import Role, UserRole
 from .notification_models import Notification, NotificationPreference
 from .analytics_models import PageView
 from .campaign_models import Campaign, CampaignAction, BusinessCampaignProgress, CompletedAction, Reward, AwardedReward, FeaturedBusiness
+from .trading_models import TradingPlan, TradingAccount, Trade
