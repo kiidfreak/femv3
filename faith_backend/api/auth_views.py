@@ -211,6 +211,8 @@ class VerifyOTPView(APIView):
                     is_active=True
                 )
                 pending.delete()
+            except IntegrityError:
+                return Response({'error': 'An account with this phone or email already exists.'}, status=status.HTTP_409_CONFLICT)
             except Exception as e:
                 return Response({'error': f'Failed to create account: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
