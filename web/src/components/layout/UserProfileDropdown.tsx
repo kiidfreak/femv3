@@ -165,14 +165,36 @@ export function UserProfileDropdown() {
                             <p className="text-[10px] text-orange-800 font-medium mb-1">
                                 {completion.completed} of {completion.total} steps completed
                             </p>
-                            <Link href={user.user_type === 'business_owner' ? '/onboarding/business' : '/onboarding/profile'}>
-                                <Button
-                                    size="sm"
-                                    className="w-full mt-2 bg-[#F58220] hover:bg-[#D66D18] text-white h-8 text-xs"
-                                >
-                                    Continue Setup <ChevronRight className="h-3 w-3 ml-1" />
-                                </Button>
-                            </Link>
+                            {/* Only show 'Continue Setup' if next step is actionable */}
+                            {(!user.has_business_profile && user.user_type === 'business_owner') ? (
+                                <Link href="/onboarding/business">
+                                    <Button
+                                        size="sm"
+                                        className="w-full mt-2 bg-[#F58220] hover:bg-[#D66D18] text-white h-8 text-xs"
+                                    >
+                                        Continue Setup <ChevronRight className="h-3 w-3 ml-1" />
+                                    </Button>
+                                </Link>
+                            ) : (!user.is_verified && user.user_type === 'business_owner') ? (
+                                <Link href="/admin/verifications/apply">
+                                    <Button
+                                        size="sm"
+                                        className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs"
+                                    >
+                                        Verify Business <ChevronRight className="h-3 w-3 ml-1" />
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Link href="/settings">
+                                    <Button
+                                        size="sm"
+                                        className="w-full mt-2 border border-gray-200 hover:bg-gray-50 text-gray-700 h-8 text-xs"
+                                        variant="outline"
+                                    >
+                                        Update Profile <ChevronRight className="h-3 w-3 ml-1" />
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     )}
 
