@@ -4,12 +4,15 @@ Faith Connect is a premier faith-based commerce and directory platform designed 
 
 ## 🚀 Features
 
-*   **Trusted Directory**: Discover businesses reviewed and verified by the community.
-*   **Business Dashboard**: Comprehensive tools for business owners to manage their profile, products, services, and analytics.
-*   **Verification System**: Multi-level verification (Phone, Email, Church) to ensure authenticity.
-*   **Review System**: Robust review mechanism with checks to prevent self-reviews and ensure integrity.
-*   **Interactive Onboarding**: Smooth, step-by-step onboarding flow for new businesses.
-*   **Role-Based Access**: Specialized views for Community Members, Business Owners, and Admins.
+*   **Trust-Centric Marketplace**: Church-verified business directory with advanced trust scoring (0-100).
+*   **Business Dashboard v2**: Real-time analytics, referral source tracking, and comprehensive business settings (no more mock data).
+*   **Media Management**: 
+    *   **Banner Uplift**: Custom business profile banners.
+    *   **Offering Gallery**: Support for multiple professional images (up to 3) per product or service.
+*   **Favorites & Saves**: Cross-platform system to save businesses and individual products/services for later.
+*   **Robust Review System**: Secure reviews with product/service tagging and community moderation.
+*   **Premium Verification**: Workflow for Church Admin approval and verification badges.
+*   **Role-Based Access**: Specialized dashboards for Members, Business Owners, and Church Administrators.
 
 ## 🛠️ Technology Stack
 
@@ -141,6 +144,15 @@ API_URL=http://localhost:8000
 3.  Commit your changes (`git commit -m 'feat: Add amazing feature'`).
 4.  Push to the branch (`git push origin feat/amazing-feature`).
 5.  Open a Pull Request.
+
+## 📈 Recent Technical Updates (v2.1)
+
+*   **Integrity Fix**: Resolved backend `IntegrityError` ensuring `business_id` is always tracked during favorite toggles.
+*   **Aesthetic Polish**: Implemented interactive heart icons for all offerings with real-time UI synchronization.
+*   **Stability**: Switched to `unoptimized` image loading for external CDNs (CloudFront/S3) to prevent 400/404 errors.
+*   **Personalization**: Enhanced Personal Settings allowing users to customize profiles and manage notification preferences.
+
+---
 
 ## 📄 License
 
