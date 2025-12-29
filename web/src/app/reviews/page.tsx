@@ -15,6 +15,7 @@ interface Review {
     review_text: string
     created_at: string
     is_verified: boolean
+    updated_at?: string
 }
 
 export default function ReviewsPage() {
@@ -58,7 +59,7 @@ export default function ReviewsPage() {
     }, [user])
 
     return (
-        <div className="space-y-6">
+        <div className="container py-12 max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">Reviews</h2>
@@ -108,6 +109,9 @@ export default function ReviewsPage() {
                                                         month: 'long',
                                                         day: 'numeric'
                                                     })}
+                                                    {review.updated_at && new Date(review.updated_at).getTime() > new Date(review.created_at).getTime() + 60000 && (
+                                                        <span className="text-gray-400 italic ml-1">(Edited)</span>
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>

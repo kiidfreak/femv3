@@ -21,11 +21,12 @@ export default function DashboardLayout({
             return
         }
 
-        if (user && user.user_type !== 'business_owner' && user.user_type !== 'system_admin') {
-            toast.error("Access denied. Business profile required.")
-            router.push('/')
-            return
-        }
+        // Allow community members to access dashboard for "My Reviews" and Settings
+        // if (user && user.user_type !== 'business_owner' && user.user_type !== 'system_admin') {
+        //    toast.error("Access denied. Business profile required.")
+        //    router.push('/')
+        //    return
+        // }
     }, [user, loading, router, pathname])
 
     if (loading) {
@@ -37,7 +38,7 @@ export default function DashboardLayout({
         )
     }
 
-    if (!user || (user.user_type !== 'business_owner' && user.user_type !== 'system_admin')) {
+    if (!user) {
         return null
     }
 

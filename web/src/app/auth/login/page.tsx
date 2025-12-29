@@ -33,16 +33,51 @@ function LoginContent() {
         }
     }, [user, router, searchParams])
 
+    const [errors, setErrors] = useState<{ identifier?: string }>({})
+
+    const validate = () => {
+        const newErrors: { identifier?: string } = {}
+        if (!identifier) {
+            newErrors.identifier = `${method === "phone" ? "Phone number" : "Email"} is required`
+        } else {
+            if (method === "email") {
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+                    newErrors.identifier = "Invalid email address"
+                }
+            } else {
+                // Phone validation for Kenya
+                // Allow formats: 712345678 (9 digits), 0712345678 (10 digits starting with 0)
+                const phoneRegex = /^(?:0)?(7(?:[0-29]\d|4[0-35-68]|5[7-9]|6[8-9]|9[0-9])\d{6}|1(?:[0-1][0-5])\d{6})$/;
+                // A simpler regex for 9 digits (since we encourage 7...) or 10 digits (07...)
+                // We show +254, so user might enter 7...
+                // Let's accept 9 digits starting with 7 or 1, or 10 digits starting with 0.
+                const clean = identifier.replace(/\D/g, '')
+                if (clean.length < 9 || clean.length > 10) {
+                    newErrors.identifier = "Phone number must be 9 or 10 digits"
+                }
+            }
+        }
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!identifier) {
-            toast.error(`Please enter your ${method === "phone" ? "phone number" : "email"}`)
-            return
-        }
+        if (!validate()) return
 
         try {
-            const resultIdentifier = await login(identifier, method)
+            let finalIdentifier = identifier
+            if (method === "phone") {
+                // Context: User sees +254 prefix.
+                // If they enter 0712..., we strip 0 -> +254712...
+                // If they enter 712..., -> +254712...
+                let clean = identifier.replace(/\D/g, '')
+                if (clean.startsWith('0')) clean = clean.substring(1)
+                finalIdentifier = `+254${clean}`
+            }
+
+            const resultIdentifier = await login(finalIdentifier, method)
             toast.success("Verification code sent!")
             router.push(`/auth/verify?identifier=${resultIdentifier}&method=${method}&remember_me=${rememberMe}`)
         } catch (err: any) {
@@ -84,15 +119,34 @@ function LoginContent() {
                             <label className="text-sm font-bold text-[#1A1A1A] ml-1">
                                 {method === "phone" ? "Phone Number" : "Email Address"}
                             </label>
-                            <Input
-                                placeholder={method === "phone" ? "07xxxxxxxx" : "name@example.com"}
-                                type={method === "phone" ? "tel" : "email"}
-                                value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
-                                className="h-14 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] transition-all rounded-xl text-lg"
-                                disabled={loading}
-                                autoFocus
-                            />
+                            {method === "phone" ? (
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-200 pr-3 mr-3">
+                                        <span className="text-xl">🇰🇪</span>
+                                        <span className="text-sm font-bold text-gray-600">+254</span>
+                                    </div>
+                                    <Input
+                                        placeholder="712 345 678"
+                                        type="tel"
+                                        value={identifier}
+                                        onChange={(e) => setIdentifier(e.target.value)}
+                                        className="h-14 pl-[110px] border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] transition-all rounded-xl text-lg"
+                                        disabled={loading}
+                                        autoFocus
+                                    />
+                                </div>
+                            ) : (
+                                <Input
+                                    placeholder="name@example.com"
+                                    type="email"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                    className="h-14 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] transition-all rounded-xl text-lg"
+                                    disabled={loading}
+                                    autoFocus
+                                />
+                            )}
+                            {errors.identifier && <p className="text-sm text-red-500 font-medium ml-1">{errors.identifier}</p>}
                         </div>
 
                         <div className="flex items-center space-x-2 px-1">

@@ -242,7 +242,7 @@ export function UserProfileDropdown() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="/dashboard/reviews" className="cursor-pointer">
+                            <Link href="/reviews" className="cursor-pointer">
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
                                 My Reviews
                             </Link>

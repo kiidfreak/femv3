@@ -183,31 +183,10 @@ def award_action(business, progress, action):
     check_and_award_rewards(business, progress)
 
 def send_action_completed_notification(business, action, progress):
-    """Send email/SMS when action completed"""
-    user = business.user
-    
-    # In-app + optional SMS/Email
-    notification_service.send_notification(
-        user=user,
-        notification_type='campaign',
-        title=f"🎉 +{action.points} Points!",
-        message=f"You completed: {action.action_name}",
-        link=f"/dashboard",
-        sms_enabled=True,
-        email_enabled=True,
-        sms_message=f"🎉 +{action.points} pts! You completed {action.action_name}. Total: {progress.total_points_earned} pts",
-        email_data={
-            'subject': f"🎉 You earned {action.points} points!",
-            'html_content': f"""
-            <h2>Congratulations!</h2>
-            <p>You completed: <strong>{action.action_name}</strong></p>
-            <p>Points earned: <strong>+{action.points}</strong></p>
-            <p>Total points: <strong>{progress.total_points_earned}/{progress.campaign.total_points_available}</strong></p>
-            <p>Progress: <strong>{progress.calculate_progress_percentage()}%</strong></p>
-            <a href="https://faithconnect.co.ke/dashboard">View Dashboard</a>
-            """
-        }
-    )
+    """Notify business owner when action earned"""
+    from api.services.notification_service import notification_service
+    notification_service.notify_action_completed(business.user, business, action, action.points)
+
 
 def check_and_award_rewards(business, progress):
     """Check if business unlocked any rewards"""
@@ -246,25 +225,5 @@ def check_and_award_rewards(business, progress):
 
 def send_reward_earned_notification(business, reward, progress):
     """Send notification when reward earned"""
-    user = business.user
-    
-    notification_service.send_notification(
-        user=user,
-        notification_type='campaign',
-        title=f"🏆 Reward Unlocked!",
-        message=f"You earned: {reward.name}",
-        link=f"/dashboard",
-        sms_enabled=True,
-        email_enabled=True,
-        sms_message=f"🏆 Reward Unlocked! {reward.name} - Check your dashboard",
-        email_data={
-            'subject': f"🏆 You unlocked: {reward.name}!",
-            'html_content': f"""
-            <h2>Reward Unlocked! 🏆</h2>
-            <h3>{reward.name}</h3>
-            <p>{reward.description}</p>
-            <p>You earned this by reaching <strong>{reward.required_points} points</strong></p>
-            <a href="https://faithconnect.co.ke/dashboard">View Your Rewards</a>
-            """
-        }
-    )
+    from api.services.notification_service import notification_service
+    notification_service.notify_reward_earned(business.user, business, reward)

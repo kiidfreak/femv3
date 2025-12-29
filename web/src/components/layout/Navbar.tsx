@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Menu, X, Home, Store, Info, PhoneCall, Package, Activity } from "lucide-react"
+import { Menu, X, Home, Store, Info, PhoneCall, Package, MessageSquare } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -22,14 +23,15 @@ import { UserProfileDropdown } from "./UserProfileDropdown"
 
 export function Navbar() {
   const { user } = useAuth()
+  const pathname = usePathname()
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
-    ...(user ? [{ href: "/dashboard/trading", label: "Trinity", icon: Activity }] : []),
     ...(user?.user_type === "business_owner" ? [{ href: "/dashboard/offerings", label: "Offerings", icon: Package }] : []),
     { href: "/directory", label: "Directory", icon: Store },
-    { href: "/about", label: "About", icon: Info },
-    { href: "/contact", label: "Contact", icon: PhoneCall },
+    { href: "/reviews", label: "Reviews", icon: MessageSquare },
+    // { href: "/about", label: "About", icon: Info },
+    // { href: "/contact", label: "Contact", icon: PhoneCall },
   ]
 
   return (
@@ -52,13 +54,16 @@ export function Navbar() {
         <div className="hidden md:flex flex-1 justify-center">
           <NavigationMenu>
             <NavigationMenuList className="gap-2">
-              {navLinks.map((link) => (
-                <NavigationMenuItem key={link.href}>
-                  <Link href={link.href} className={cn(navigationMenuTriggerStyle(), "h-12 px-6 rounded-full text-lg font-medium hover:bg-orange-50 hover:text-[#F58220] transition-colors")}>
-                    {link.label}
-                  </Link>
-                </NavigationMenuItem>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || (link.href !== '/' && pathname?.startsWith(link.href));
+                return (
+                  <NavigationMenuItem key={link.href}>
+                    <Link href={link.href} className={cn(navigationMenuTriggerStyle(), "h-12 px-6 rounded-full text-lg font-medium transition-colors", isActive ? "bg-orange-50 text-[#F58220]" : "hover:bg-orange-50 hover:text-[#F58220]")}>
+                      {link.label}
+                    </Link>
+                  </NavigationMenuItem>
+                )
+              })}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -95,19 +100,23 @@ export function Navbar() {
                   <DialogTitle className="text-xl font-bold flex items-center gap-2">
                     <span className="text-[#F58220]">Faith</span> Connect
                   </DialogTitle>
+
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center gap-4 p-4 rounded-xl text-lg font-bold text-gray-700 hover:bg-orange-50 hover:text-[#F58220] transition-colors"
-                    >
-                      <link.icon className="h-6 w-6" />
-                      {link.label}
-                    </Link>
-                  ))}
+                  {navLinks.map((link) => {
+                    const isActive = pathname === link.href || (link.href !== '/' && pathname?.startsWith(link.href));
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn("flex items-center gap-4 p-4 rounded-xl text-lg font-bold transition-colors", isActive ? "bg-orange-50 text-[#F58220]" : "text-gray-700 hover:bg-orange-50 hover:text-[#F58220]")}
+                      >
+                        <link.icon className="h-6 w-6" />
+                        {link.label}
+                      </Link>
+                    )
+                  })}
 
                   {!user && (
                     <div className="pt-4 space-y-3">

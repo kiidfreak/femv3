@@ -150,6 +150,42 @@ class NotificationService:
             }
         )
     
+    def notify_action_completed(self, business_owner, business, action, points_earned):
+        """Notify business owner when a campaign action is completed"""
+        self.send_notification(
+            user=business_owner,
+            notification_type='campaign_update',
+            title="Action Completed! 🎉",
+            message=f"You earned +{points_earned} points for: {action.action_name}",
+            link="/dashboard",
+            business=business,
+            sms_enabled=True,
+            email_enabled=True,
+            sms_message=f"🎉 Nice! You earned {points_earned} points for '{action.action_name}' on Faith Connect!",
+            email_data={
+                'subject': f"🎉 You earned {points_earned} points!",
+                'html_content': f"<h2>Congratulations!</h2><p>You completed: <strong>{action.action_name}</strong></p><p>Points earned: <strong>+{points_earned}</strong></p>"
+            }
+        )
+
+    def notify_reward_earned(self, business_owner, business, reward):
+        """Notify when a campaign reward is earned"""
+        self.send_notification(
+            user=business_owner,
+            notification_type='campaign_update',
+            title="New Reward Unlocked! 🏆",
+            message=f"Congratulations! You've unlocked: {reward.reward_name}",
+            link="/dashboard",
+            business=business,
+            sms_enabled=True,
+            email_enabled=True,
+            sms_message=f"🏆 Awesome! You unlocked a new reward: {reward.reward_name}! Check it out: faithconnect.co.ke/dashboard",
+            email_data={
+                'subject': f"🏆 Reward Unlocked: {reward.reward_name}",
+                'html_content': f"<h2>Congratulations!</h2><p>You've unlocked: <strong>{reward.reward_name}</strong></p><p>{reward.description}</p>"
+            }
+        )
+
     def _get_review_email_html(self, user, business, review):
         """Generate HTML for review notification email"""
         return f"""
@@ -161,7 +197,7 @@ class NotificationService:
             <blockquote style="border-left: 4px solid #F58220; padding-left: 16px; margin: 20px 0;">
                 "{review.review_text}"
             </blockquote>
-            <a href="https://faithconnect.co.ke/business/{business.id}" style="background-color: #F58220; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px;">View Business</a>
+            <a href="https://faithconnect.biz/business/{business.id}" style="background-color: #F58220; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px;">View Business</a>
         </body>
         </html>
         """
@@ -179,7 +215,7 @@ class NotificationService:
                 <li>Priority placement</li>
                 <li>Verified badge</li>
             </ul>
-            <a href="https://faithconnect.co.ke/business/{business.id}" style="background-color: #F58220; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px;">View Profile</a>
+            <a href="https://faithconnect.biz/business/{business.id}" style="background-color: #F58220; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px;">View Profile</a>
         </body>
         </html>
         """

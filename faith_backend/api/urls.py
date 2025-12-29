@@ -9,7 +9,6 @@ from .auth_views import PhoneLoginView, SignupView, VerifyOTPView, UpdateProfile
 from .role_views import RoleViewSet, UserRoleViewSet, PermissionViewSet
 from .notification_views import NotificationViewSet, NotificationPreferenceViewSet
 from .campaign_views import CampaignViewSet, MyRewardsViewSet, FeaturedBusinessViewSet
-from .trading_views import TradingPlanViewSet, TradingAccountViewSet, TradeViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -33,11 +32,6 @@ router.register(r'notification-preferences', NotificationPreferenceViewSet, base
 router.register(r'campaigns', CampaignViewSet, basename='campaign')
 router.register(r'my-rewards', MyRewardsViewSet, basename='my-rewards')
 router.register(r'featured-businesses', FeaturedBusinessViewSet, basename='featured-businesses')
-
-# Trading
-router.register(r'trading/plans', TradingPlanViewSet, basename='trading-plan')
-router.register(r'trading/accounts', TradingAccountViewSet, basename='trading-account')
-router.register(r'trading/trades', TradeViewSet, basename='trading-trade')
 
 urlpatterns = [
     # Auth endpoints

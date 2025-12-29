@@ -1,4 +1,5 @@
 "use client"
+import { useAuth } from "@/lib/auth"
 
 import { Hero } from "@/components/sections/Hero";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ const iconMap: Record<string, any> = {
 import { OfferingCard } from "@/components/directory/OfferingCard";
 
 export default function Home() {
+  const { user } = useAuth()
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredOfferings, setFeaturedOfferings] = useState<any[]>([]);
   const [stats, setStats] = useState({ total_businesses: 0, total_members: 0, verified_percentage: 0, avg_rating: 0 });
@@ -330,50 +332,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA / Split Section */}
-      <section className="py-20 bg-[#1A1A1A] text-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold mb-6">Ready to Join Faith Connect?</h2>
-            <p className="text-white/60 text-lg">
-              Whether you're looking for trusted services or want to showcase your business to our faith community,
-              Faith Connect brings believers together through commerce.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white/5 p-8 rounded-2xl border border-white/10 hover:border-[#F58220]/50 transition-colors">
-              <div className="bg-[#F58220]/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-6">
-                <Users className="h-7 w-7 text-[#F58220]" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">For Community Members</h3>
-              <p className="text-white/60 mb-8 leading-relaxed">
-                Find trusted businesses owned by fellow believers. Support local commerce while building meaningful relationships.
+      {/* Final CTA / Split Section - Only for non-authenticated users */}
+      {!user && (
+        <section className="py-20 bg-[#1A1A1A] text-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl font-bold mb-6">Ready to Join Faith Connect?</h2>
+              <p className="text-white/60 text-lg">
+                Whether you're looking for trusted services or want to showcase your business to our faith community,
+                Faith Connect brings believers together through commerce.
               </p>
-              <Link href="/directory">
-                <Button className="w-full bg-white text-black hover:bg-gray-200 font-bold">
-                  Explore Services
-                </Button>
-              </Link>
             </div>
 
-            <div className="bg-white/5 p-8 rounded-2xl border border-white/10 hover:border-[#F58220]/50 transition-colors">
-              <div className="bg-[#F58220]/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-6">
-                <Store className="h-7 w-7 text-[#F58220]" />
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              <div className="bg-white/5 p-8 rounded-2xl border border-white/10 hover:border-[#F58220]/50 transition-colors">
+                <div className="bg-[#F58220]/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-6">
+                  <Users className="h-7 w-7 text-[#F58220]" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">For Community Members</h3>
+                <p className="text-white/60 mb-8 leading-relaxed">
+                  Find trusted businesses owned by fellow believers. Support local commerce while building meaningful relationships.
+                </p>
+                <Link href="/directory">
+                  <Button className="w-full bg-white text-black hover:bg-gray-200 font-bold">
+                    Explore Services
+                  </Button>
+                </Link>
               </div>
-              <h3 className="text-2xl font-bold mb-4">For Business Owners</h3>
-              <p className="text-white/60 mb-8 leading-relaxed">
-                Showcase your business to our church community. Connect with customers who share your values and faith commitment.
-              </p>
-              <Link href="/auth/signup">
-                <Button className="w-full bg-[#F58220] hover:bg-[#D66D18] text-white font-bold">
-                  List Your Business
-                </Button>
-              </Link>
+
+              <div className="bg-white/5 p-8 rounded-2xl border border-white/10 hover:border-[#F58220]/50 transition-colors">
+                <div className="bg-[#F58220]/20 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-6">
+                  <Store className="h-7 w-7 text-[#F58220]" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">For Business Owners</h3>
+                <p className="text-white/60 mb-8 leading-relaxed">
+                  Showcase your business to our church community. Connect with customers who share your values and faith commitment.
+                </p>
+                <Link href="/auth/signup">
+                  <Button className="w-full bg-[#F58220] hover:bg-[#D66D18] text-white font-bold">
+                    List Your Business
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

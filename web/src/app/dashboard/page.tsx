@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2, ArrowRight } from "lucide-react"
+import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2, ArrowRight, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
@@ -251,6 +251,22 @@ function DashboardContent() {
                     </Card>
                 </Link>
 
+                <Link href="/dashboard/gallery" className="block">
+                    <Card className="border-2 border-orange-100 hover:border-[#F58220] hover:shadow-xl transition-all cursor-pointer group h-full">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-[#1A1A1A] group-hover:text-[#F58220] transition-colors">Business Gallery</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Manage image portfolio</p>
+                                </div>
+                                <div className="h-10 w-10 bg-orange-50 group-hover:bg-orange-100 rounded-xl flex items-center justify-center transition-colors shrink-0">
+                                    <ImageIcon className="h-5 w-5 text-[#F58220]" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </Link>
+
                 <Link href={businessId ? `/business/${businessId}` : '#'} className={cn("block", !businessId && "pointer-events-none opacity-50")}>
                     <Card className="border-2 border-blue-100 hover:border-blue-500 hover:shadow-xl transition-all cursor-pointer group h-full">
                         <CardContent className="p-6">
@@ -385,10 +401,12 @@ function DashboardContent() {
             {/* Action Button */}
             <div className="flex flex-col items-center gap-4 pt-4">
                 <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-                <Button className="h-14 px-10 text-lg font-bold bg-[#F58220] hover:bg-[#D66D18] text-white rounded-2xl shadow-xl shadow-[#F58220]/30 transition-all hover:scale-[1.05] hover:rotate-1 active:scale-95 group">
-                    <TrendingUp className="mr-3 h-6 w-6 group-hover:translate-y-[-2px] group-hover:translate-x-[2px] transition-transform" />
-                    View Full Performance Report
-                </Button>
+                <Link href="/dashboard/reports">
+                    <Button className="h-14 px-10 text-lg font-bold bg-[#F58220] hover:bg-[#D66D18] text-white rounded-2xl shadow-xl shadow-[#F58220]/30 transition-all hover:scale-[1.05] hover:rotate-1 active:scale-95 group">
+                        <TrendingUp className="mr-3 h-6 w-6 group-hover:translate-y-[-2px] group-hover:translate-x-[2px] transition-transform" />
+                        View Full Performance Report
+                    </Button>
+                </Link>
                 <p className="text-gray-400 text-sm italic">Weekly reports are generated every Sunday at midnight.</p>
             </div>
         </div>

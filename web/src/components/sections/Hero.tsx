@@ -10,10 +10,61 @@ export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { sta
     const [searchType, setSearchType] = useState<"businesses" | "offerings">("businesses")
     const router = useRouter()
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!searchQuery.trim()) return
-        router.push(`/directory?search=${encodeURIComponent(searchQuery)}&view=${searchType}`)
+    const [suggestions, setSuggestions] = useState<{ businesses: any[], categories: any[] }>({ businesses: [], categories: [] })
+    const [isSearching, setIsSearching] = useState(false)
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [nearMe, setNearMe] = useState(false)
+    const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null)
+
+    const handleSearch = (e?: React.FormEvent) => {
+        if (e) e.preventDefault()
+        if (!searchQuery.trim() && !nearMe) return
+
+        let url = `/directory?search=${encodeURIComponent(searchQuery)}&view=${searchType}`
+        if (nearMe && userCoords) {
+            url += `&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=20`
+        }
+        router.push(url)
+    }
+
+    const fetchSuggestions = async (q: string) => {
+        if (q.length < 2) {
+            setSuggestions({ businesses: [], categories: [] })
+            return
+        }
+        setIsSearching(true)
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v3'}/businesses/suggestions/?q=${encodeURIComponent(q)}`)
+            if (res.ok) {
+                const data = await res.json()
+                setSuggestions(data)
+                setShowSuggestions(true)
+            }
+        } catch (error) {
+            console.error("Failed to fetch suggestions:", error)
+        } finally {
+            setIsSearching(false)
+        }
+    }
+
+    const handleLocationToggle = () => {
+        if (!nearMe) {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    setUserCoords({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    })
+                    setNearMe(true)
+                }, (error) => {
+                    console.error("Error getting location:", error)
+                    alert("Please enable location access to use this feature.")
+                })
+            }
+        } else {
+            setNearMe(false)
+            setUserCoords(null)
+        }
     }
 
     return (
@@ -29,7 +80,7 @@ export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { sta
                     <div className="text-left animate-fade-in-up">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-[#F58220] text-sm font-bold mb-8">
                             <Users className="h-4 w-4" />
-                            The Business Network
+                            Community Commerce Network
                         </div>
 
                         <h1 className="text-6xl lg:text-8xl font-black tracking-tight text-[#1A1A1A] leading-[1.1] mb-2">
@@ -56,23 +107,67 @@ export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { sta
                                         className="h-14 pl-12 pr-4 bg-transparent border-none text-lg placeholder:text-gray-400 focus-visible:ring-0 rounded-2xl"
                                         placeholder={searchType === "businesses" ? "Search for businesses..." : "Search for offerings..."}
                                         value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value)
+                                            fetchSuggestions(e.target.value)
+                                        }}
+                                        onFocus={() => {
+                                            if (searchQuery.length >= 2) setShowSuggestions(true)
+                                        }}
+                                        onBlur={() => {
+                                            setTimeout(() => setShowSuggestions(false), 200)
+                                        }}
                                     />
+
+                                    {/* Search Suggestions Dropdown */}
+                                    {showSuggestions && (suggestions.businesses.length > 0 || suggestions.categories.length > 0) && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {suggestions.businesses.length > 0 && (
+                                                <div className="p-4 border-b border-gray-50">
+                                                    <h3 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-2">Businesses</h3>
+                                                    <div className="space-y-1">
+                                                        {suggestions.businesses.map((biz) => (
+                                                            <Link key={biz.id} href={`/business/${biz.id}`} className="flex items-center gap-3 p-2 hover:bg-orange-50 rounded-xl transition-colors group/item">
+                                                                <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center text-[#F58220] font-bold text-xs">
+                                                                    {biz.business_name.charAt(0)}
+                                                                </div>
+                                                                <span className="text-sm font-bold text-[#1A1A1A] group-hover/item:text-[#F58220]">{biz.business_name}</span>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {suggestions.categories.length > 0 && (
+                                                <div className="p-4">
+                                                    <h3 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-2">Categories</h3>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {suggestions.categories.map((cat) => (
+                                                            <Link key={cat.id} href={`/directory?category=${cat.id}`} className="px-3 py-1.5 bg-gray-50 hover:bg-orange-100 text-gray-600 hover:text-[#F58220] rounded-full text-xs font-bold transition-all">
+                                                                {cat.name}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex items-center gap-2 px-2 border-l border-gray-100 sm:min-w-[180px]">
+                                <div className="flex items-center gap-2 px-2 border-l border-gray-100 sm:min-w-[200px]">
                                     <button
                                         type="button"
-                                        onClick={() => setSearchType("businesses")}
-                                        className={`flex-1 h-10 rounded-xl px-3 flex items-center justify-center gap-2 text-xs font-bold transition-all ${searchType === "businesses" ? "bg-[#F58220] text-white" : "text-gray-500 hover:bg-gray-50"}`}
+                                        onClick={handleLocationToggle}
+                                        className={`flex-1 h-10 rounded-xl px-3 flex items-center justify-center gap-2 text-xs font-bold transition-all ${nearMe ? "bg-blue-500 text-white" : "text-gray-500 hover:bg-gray-50"}`}
                                     >
-                                        <Store className="h-3.5 w-3.5" /> Businesses
+                                        <MapPin className={`h-3.5 w-3.5 ${nearMe ? "animate-pulse" : ""}`} />
+                                        {nearMe ? "Near Me ON" : "Near Me"}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSearchType("offerings")}
-                                        className={`flex-1 h-10 rounded-xl px-3 flex items-center justify-center gap-2 text-xs font-bold transition-all ${searchType === "offerings" ? "bg-[#F58220] text-white" : "text-gray-500 hover:bg-gray-50"}`}
+                                        onClick={() => setSearchType(searchType === "businesses" ? "offerings" : "businesses")}
+                                        className="h-10 px-3 bg-gray-50 text-gray-400 rounded-xl hover:text-[#F58220] transition-colors"
+                                        title="Toggle search type"
                                     >
-                                        <Package className="h-3.5 w-3.5" /> Offerings
+                                        {searchType === "businesses" ? <Store className="h-4 w-4" /> : <Package className="h-4 w-4" />}
                                     </button>
                                 </div>
                                 <Button type="submit" className="h-14 px-8 rounded-2xl bg-[#1A1A1A] hover:bg-black text-white font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95">

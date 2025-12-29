@@ -14,7 +14,24 @@ const getHeaders = () => {
 
 export const getImageUrl = (path?: string) => {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
+
+    // Handle cases where the path might be like "/media/https%3A/..." or "media/https%3A/..."
+    const decoded = decodeURIComponent(path);
+    const httpIndex = decoded.indexOf('http');
+
+    if (httpIndex !== -1) {
+        const potentialUrl = decoded.substring(httpIndex);
+        // If it's an external absolute URL (S3, etc.), use it directly
+        if (potentialUrl.includes('://') && !potentialUrl.includes('localhost') && !potentialUrl.includes('127.0.0.1')) {
+            return potentialUrl;
+        }
+    }
+
+    // If it's already a full local URL, return it
+    if (path.startsWith('http')) {
+        return path;
+    }
+
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3").replace('/api/v3', '');
     return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }
@@ -173,26 +190,5 @@ export const apiClient = {
             headers: getHeaders(),
             body: JSON.stringify(data)
         }),
-    },
-
-    // 8. Trading
-    trading: {
-        plans: {
-            list: () => fetch(`${API_BASE_URL}/trading/plans/`, { headers: getHeaders() }),
-        },
-        accounts: {
-            list: () => fetch(`${API_BASE_URL}/trading/accounts/`, { headers: getHeaders() }),
-            get: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/`, { headers: getHeaders() }),
-            create: (planId: number) => fetch(`${API_BASE_URL}/trading/accounts/`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify({ plan: planId })
-            }),
-            getTrades: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/trades/`, { headers: getHeaders() }),
-            sync: (id: string) => fetch(`${API_BASE_URL}/trading/accounts/${id}/sync/`, {
-                method: 'POST',
-                headers: getHeaders()
-            }),
-        }
     }
 }

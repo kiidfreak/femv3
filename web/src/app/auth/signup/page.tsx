@@ -104,14 +104,20 @@ export default function SignupPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-[#1A1A1A] ml-1">Phone Number</label>
-                            <Input
-                                placeholder="07xxxxxxxx"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={loading}
-                            />
+                            <div className="relative">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-200 pr-3 mr-3">
+                                    <span className="text-xl">🇰🇪</span>
+                                    <span className="text-sm font-bold text-gray-600">+254</span>
+                                </div>
+                                <Input
+                                    placeholder="712 345 678"
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    className="h-12 pl-[110px] border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
+                                    disabled={loading}
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2 md:col-span-2">

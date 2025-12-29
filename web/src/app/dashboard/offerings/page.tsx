@@ -64,6 +64,7 @@ export default function ManageOfferingsPage() {
     const [activeTab, setActiveTab] = useState<"products" | "services">("products")
     const [searchQuery, setSearchQuery] = useState("")
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [editingOffering, setEditingOffering] = useState<{ type: "products" | "services", data: any } | null>(null)
 
     const [products, setProducts] = useState<Product[]>([])
     const [services, setServices] = useState<Service[]>([])
@@ -81,7 +82,6 @@ export default function ManageOfferingsPage() {
                 setProducts(data.products || [])
                 setServices(data.services || [])
             } else if (res.status === 404) {
-                // Return empty arrays to stop loading state
                 setProducts([])
                 setServices([])
             } else {
@@ -89,7 +89,6 @@ export default function ManageOfferingsPage() {
             }
         } catch (error) {
             console.error("Error fetching offerings:", error)
-            toast.error("An error occurred while connecting to the server.")
         } finally {
             setIsLoading(false)
         }
@@ -98,13 +97,10 @@ export default function ManageOfferingsPage() {
     const toggleProductStatus = async (id: number) => {
         const product = products.find(p => p.id === id)
         if (!product) return
-
         try {
             const res = await apiClient.products.save({ id, is_active: !product.is_active })
             if (res.ok) {
-                setProducts(products.map(p =>
-                    p.id === id ? { ...p, is_active: !p.is_active } : p
-                ))
+                setProducts(products.map(p => p.id === id ? { ...p, is_active: !p.is_active } : p))
                 toast.success(`Product ${!product.is_active ? 'activated' : 'deactivated'}`)
             }
         } catch (error) {
@@ -115,18 +111,26 @@ export default function ManageOfferingsPage() {
     const toggleServiceStatus = async (id: number) => {
         const service = services.find(s => s.id === id)
         if (!service) return
-
         try {
             const res = await apiClient.services.save({ id, is_active: !service.is_active })
             if (res.ok) {
-                setServices(services.map(s =>
-                    s.id === id ? { ...s, is_active: !s.is_active } : s
-                ))
+                setServices(services.map(s => s.id === id ? { ...s, is_active: !s.is_active } : s))
                 toast.success(`Service ${!service.is_active ? 'activated' : 'deactivated'}`)
             }
         } catch (error) {
             toast.error("Failed to update status")
         }
+    }
+
+    const handleEdit = (type: "products" | "services", data: any) => {
+        setEditingOffering({ type, data })
+        setActiveTab(type)
+        setIsAddDialogOpen(true)
+    }
+
+    const handleCloseDialog = () => {
+        setIsAddDialogOpen(false)
+        setEditingOffering(null)
     }
 
     const filteredProducts = products.filter(p =>
@@ -161,7 +165,7 @@ export default function ManageOfferingsPage() {
                     <h1 className="text-4xl font-bold text-[#1A1A1A] tracking-tight">Manage Offerings</h1>
                     <p className="text-gray-500 mt-2">Add, edit, and organize your products & services</p>
                 </div>
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <Dialog open={isAddDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
                     <DialogTrigger asChild>
                         <Button
                             disabled={activeTab === "products" ? !canAddProduct : !canAddService}
@@ -173,42 +177,20 @@ export default function ManageOfferingsPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
-                            <DialogTitle>Add New {activeTab === "products" ? "Product" : "Service"}</DialogTitle>
+                            <DialogTitle>{editingOffering ? "Edit" : "Add New"} {activeTab === "products" ? "Product" : "Service"}</DialogTitle>
                             <DialogDescription>
-                                Fill in the details below to add a new {activeTab === "products" ? "product" : "service"} to your catalog
+                                Fill in the details below to {editingOffering ? "update your" : "add a new"} {activeTab === "products" ? "product" : "service"}
                             </DialogDescription>
                         </DialogHeader>
                         <AddOfferingForm
                             type={activeTab}
-                            onClose={() => setIsAddDialogOpen(false)}
+                            initialData={editingOffering?.data}
+                            onClose={handleCloseDialog}
                             onSuccess={fetchBusinessData}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-
-            {/* Limit Warning Banner */}
-            {((activeTab === "products" && remainingProducts <= 2 && remainingProducts > 0) ||
-                (activeTab === "services" && remainingServices <= 2 && remainingServices > 0)) && (
-                    <Card className="border-orange-200 bg-orange-50">
-                        <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="text-sm font-bold text-orange-800">
-                                        {activeTab === "products"
-                                            ? `Only ${remainingProducts} product slot${remainingProducts === 1 ? '' : 's'} remaining`
-                                            : `Only ${remainingServices} service slot${remainingServices === 1 ? '' : 's'} remaining`
-                                        }
-                                    </p>
-                                    <p className="text-xs text-orange-700 mt-1">
-                                        You can have up to {activeTab === "products" ? MAX_PRODUCTS : MAX_SERVICES} {activeTab} per business.
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
 
             {/* Max Limit Reached Banner */}
             {((activeTab === "products" && !canAddProduct) ||
@@ -234,20 +216,14 @@ export default function ManageOfferingsPage() {
             <div className="flex gap-2 bg-gray-100 p-1.5 rounded-xl w-fit">
                 <button
                     onClick={() => setActiveTab("products")}
-                    className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${activeTab === "products"
-                        ? "bg-white text-[#F58220] shadow-sm"
-                        : "text-gray-600 hover:text-gray-800"
-                        }`}
+                    className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${activeTab === "products" ? "bg-white text-[#F58220] shadow-sm" : "text-gray-600 hover:text-gray-800"}`}
                 >
                     <Package className="inline h-4 w-4 mr-2" />
                     Products ({products.length})
                 </button>
                 <button
                     onClick={() => setActiveTab("services")}
-                    className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${activeTab === "services"
-                        ? "bg-white text-[#F58220] shadow-sm"
-                        : "text-gray-600 hover:text-gray-800"
-                        }`}
+                    className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${activeTab === "services" ? "bg-white text-[#F58220] shadow-sm" : "text-gray-600 hover:text-gray-800"}`}
                 >
                     <Clock className="inline h-4 w-4 mr-2" />
                     Services ({services.length})
@@ -265,46 +241,23 @@ export default function ManageOfferingsPage() {
                 />
             </div>
 
-            {/* Products List */}
-            {activeTab === "products" && (
-                <div className="space-y-4">
-                    {filteredProducts.length === 0 ? (
-                        <EmptyState type="products" onAdd={() => setIsAddDialogOpen(true)} />
-                    ) : (
-                        filteredProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onToggleStatus={toggleProductStatus}
-                            />
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* Services List */}
-            {activeTab === "services" && (
-                <div className="space-y-4">
-                    {filteredServices.length === 0 ? (
-                        <EmptyState type="services" onAdd={() => setIsAddDialogOpen(true)} />
-                    ) : (
-                        filteredServices.map((service) => (
-                            <ServiceCard
-                                key={service.id}
-                                service={service}
-                                onToggleStatus={toggleServiceStatus}
-                            />
-                        ))
-                    )}
-                </div>
-            )}
+            {/* List Content */}
+            <div className="space-y-4">
+                {activeTab === "products" ? (
+                    filteredProducts.length === 0 ? <EmptyState type="products" onAdd={() => setIsAddDialogOpen(true)} /> :
+                        filteredProducts.map(p => <ProductCard key={p.id} product={p} onToggleStatus={toggleProductStatus} onEdit={() => handleEdit("products", p)} />)
+                ) : (
+                    filteredServices.length === 0 ? <EmptyState type="services" onAdd={() => setIsAddDialogOpen(true)} /> :
+                        filteredServices.map(s => <ServiceCard key={s.id} service={s} onToggleStatus={toggleServiceStatus} onEdit={() => handleEdit("services", s)} />)
+                )}
+            </div>
         </div>
     )
 }
 
-function ProductCard({ product, onToggleStatus }: { product: Product; onToggleStatus: (id: number) => void }) {
+function ProductCard({ product, onToggleStatus, onEdit }: { product: Product; onToggleStatus: (id: number) => void; onEdit: () => void }) {
     return (
-        <Card className="border-none shadow-lg hover:shadow-xl transition-all group">
+        <Card className="border-none shadow-lg hover:shadow-xl transition-all group overflow-hidden">
             <CardContent className="p-6">
                 <div className="flex items-start gap-6">
                     {/* Image */}
@@ -319,8 +272,8 @@ function ProductCard({ product, onToggleStatus }: { product: Product; onToggleSt
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 className="text-xl font-bold text-[#1A1A1A]">{product.name}</h3>
+                            <div className="cursor-pointer" onClick={onEdit}>
+                                <h3 className="text-xl font-bold text-[#1A1A1A] group-hover:text-[#F58220] transition-colors">{product.name}</h3>
                                 <p className="text-gray-600 mt-1 line-clamp-2">{product.description}</p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -351,12 +304,9 @@ function ProductCard({ product, onToggleStatus }: { product: Product; onToggleSt
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg">
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={onEdit} className="h-9 w-9 p-0 rounded-lg">
                             <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
@@ -365,9 +315,9 @@ function ProductCard({ product, onToggleStatus }: { product: Product; onToggleSt
     )
 }
 
-function ServiceCard({ service, onToggleStatus }: { service: Service; onToggleStatus: (id: number) => void }) {
+function ServiceCard({ service, onToggleStatus, onEdit }: { service: Service; onToggleStatus: (id: number) => void; onEdit: () => void }) {
     return (
-        <Card className="border-none shadow-lg hover:shadow-xl transition-all group">
+        <Card className="border-none shadow-lg hover:shadow-xl transition-all group overflow-hidden">
             <CardContent className="p-6">
                 <div className="flex items-start gap-6">
                     {/* Icon */}
@@ -378,8 +328,8 @@ function ServiceCard({ service, onToggleStatus }: { service: Service; onToggleSt
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 className="text-xl font-bold text-[#1A1A1A]">{service.name}</h3>
+                            <div className="cursor-pointer" onClick={onEdit}>
+                                <h3 className="text-xl font-bold text-[#1A1A1A] group-hover:text-[#F58220] transition-colors">{service.name}</h3>
                                 <p className="text-gray-600 mt-1 line-clamp-2">{service.description}</p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -400,21 +350,13 @@ function ServiceCard({ service, onToggleStatus }: { service: Service; onToggleSt
                                     {service.price_range}
                                 </span>
                             </div>
-                            {service.duration && (
-                                <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                                    {service.duration}
-                                </div>
-                            )}
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg">
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={onEdit} className="h-9 w-9 p-0 rounded-lg">
                             <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg text-red-600 hover:text-red-700">
-                            <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
@@ -423,37 +365,15 @@ function ServiceCard({ service, onToggleStatus }: { service: Service; onToggleSt
     )
 }
 
-function EmptyState({ type, onAdd }: { type: string; onAdd: () => void }) {
-    return (
-        <Card className="border-2 border-dashed border-gray-300">
-            <CardContent className="p-12 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    {type === "products" ? (
-                        <Package className="h-8 w-8 text-gray-400" />
-                    ) : (
-                        <Clock className="h-8 w-8 text-gray-400" />
-                    )}
-                </div>
-                <h3 className="text-xl font-bold text-gray-700 mb-2">No {type} yet</h3>
-                <p className="text-gray-500 mb-6">Get started by adding your first {type === "products" ? "product" : "service"}</p>
-                <Button onClick={onAdd} className="bg-[#F58220] hover:bg-[#D66D18] text-white">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add {type === "products" ? "Product" : "Service"}
-                </Button>
-            </CardContent>
-        </Card>
-    )
-}
-
-function AddOfferingForm({ type, onClose, onSuccess }: { type: "products" | "services"; onClose: () => void; onSuccess: () => void }) {
+function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "products" | "services"; initialData?: any; onClose: () => void; onSuccess: () => void }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        price: "",
-        price_currency: "KES",
-        price_range: "",
-        duration: ""
+        name: initialData?.name || "",
+        description: initialData?.description || "",
+        price: initialData?.price?.toString() || "",
+        price_currency: initialData?.price_currency || "KES",
+        price_range: initialData?.price_range || "",
+        duration: initialData?.duration || ""
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -466,18 +386,20 @@ function AddOfferingForm({ type, onClose, onSuccess }: { type: "products" | "ser
         setIsLoading(true)
         try {
             const payload = type === "products" ? {
+                id: initialData?.id,
                 name: formData.name,
                 description: formData.description,
                 price: parseFloat(formData.price) || 0,
                 price_currency: formData.price_currency,
-                is_active: true,
-                in_stock: true
+                is_active: initialData ? initialData.is_active : true,
+                in_stock: initialData ? initialData.in_stock : true
             } : {
+                id: initialData?.id,
                 name: formData.name,
                 description: formData.description,
                 price_range: formData.price_range,
                 duration: formData.duration,
-                is_active: true
+                is_active: initialData ? initialData.is_active : true
             }
 
             const res = await (type === "products"
@@ -485,15 +407,15 @@ function AddOfferingForm({ type, onClose, onSuccess }: { type: "products" | "ser
                 : apiClient.services.save(payload))
 
             if (res.ok) {
-                toast.success(`${type === "products" ? "Product" : "Service"} added successfully!`)
+                toast.success(`${type === "products" ? "Product" : "Service"} ${initialData ? 'updated' : 'added'} successfully!`)
                 onSuccess()
                 onClose()
             } else {
                 const errorData = await res.json()
-                toast.error(errorData.error || `Failed to add ${type}`)
+                toast.error(errorData.error || `Failed to save ${type}`)
             }
         } catch (error) {
-            console.error("Failed to add offering:", error)
+            console.error("Failed to save offering:", error)
             toast.error("An error occurred. Please try again.")
         } finally {
             setIsLoading(false)
@@ -572,17 +494,8 @@ function AddOfferingForm({ type, onClose, onSuccess }: { type: "products" | "ser
                 <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-12">
                     Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading} className="flex-1 h-12 bg-[#F58220] hover:bg-[#D66D18] text-white">
-                    {isLoading ? (
-                        <div className="flex items-center gap-2">
-                            <span>Saving</span>
-                            <div className="flex gap-1">
-                                <div className="w-1.5 h-1.5 bg-white rounded-full loading-dot"></div>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full loading-dot"></div>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full loading-dot"></div>
-                            </div>
-                        </div>
-                    ) : "Add " + (type === "products" ? "Product" : "Service")}
+                <Button type="submit" disabled={isLoading} className="flex-1 h-12 bg-[#F58220] hover:bg-[#D66D18] text-white font-bold">
+                    {isLoading ? "Saving..." : (initialData ? "Update " : "Add ") + (type === "products" ? "Product" : "Service")}
                 </Button>
             </div>
         </form>
