@@ -65,8 +65,12 @@ export default function BusinessSettingsPage() {
 
                         // Strip partnership number from description if it exists
                         let cleanDescription = data.description || ""
-                        if (cleanDescription.includes("Partnership Number:")) {
-                            cleanDescription = cleanDescription.split("\n\nPartnership Number:")[0]
+                        // Handle different line break styles and trim
+                        const partnershipMarker = "Partnership Number:"
+                        if (cleanDescription.includes(partnershipMarker)) {
+                            // Find the index and take everything before it
+                            const index = cleanDescription.indexOf(partnershipMarker)
+                            cleanDescription = cleanDescription.substring(0, index).trim()
                         }
 
                         setFormData({
