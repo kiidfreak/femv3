@@ -108,6 +108,7 @@ class Business(models.Model):
         ('never', 'Never'),
     ]
     report_frequency = models.CharField(max_length=10, choices=REPORT_FREQUENCIES, default='weekly')
+    is_visible = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -100,6 +100,11 @@ export const apiClient = {
             headers: getHeaders()
         }),
         myBusiness: () => fetch(`${API_BASE_URL}/businesses/my_business/`, { headers: getHeaders() }),
+        update: (id: string, data: any) => fetch(`${API_BASE_URL}/businesses/${id}/`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }),
         getPublicStats: () => fetch(`${API_BASE_URL}/businesses/public_stats/`, { headers: { 'Content-Type': 'application/json' } }),
     },
 

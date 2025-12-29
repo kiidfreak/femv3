@@ -58,28 +58,33 @@ export default function ReviewsPage() {
         if (user) fetchReviews()
     }, [user])
 
+    const isBusiness = user?.user_type === 'business_owner'
+
     return (
         <div className="container py-12 max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">Reviews</h2>
-                    <p className="text-muted-foreground">Manage reviews and ratings from community members.</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
+                        {isBusiness ? "Business Reviews" : "My Reviews"}
+                    </h2>
+                    <p className="text-muted-foreground">
+                        {isBusiness
+                            ? "Manage reviews and ratings from community members."
+                            : "View ratings and feedback you've shared with businesses."}
+                    </p>
                 </div>
-                {!loading && reviews.length > 0 && (
-                    <div className="bg-orange-50 px-4 py-2 rounded-xl border border-orange-100 flex items-center gap-2">
-                        <Star className="h-5 w-5 fill-[#F58220] text-[#F58220]" />
-                        <span className="text-lg font-extrabold text-[#F58220]">
-                            {(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)}
-                        </span>
-                        <span className="text-sm text-[#F58220]/70 font-bold">Average Rating</span>
-                    </div>
-                )}
             </div>
 
             <Card className="border-none shadow-lg">
                 <CardHeader className="pb-2">
-                    <CardTitle>Recent Feedback</CardTitle>
-                    <CardDescription>View what the community is saying about your business.</CardDescription>
+                    <CardTitle>
+                        {isBusiness ? "Recent Feedback" : "Your Feedback History"}
+                    </CardTitle>
+                    <CardDescription>
+                        {isBusiness
+                            ? "View what the community is saying about your business."
+                            : "A history of your interactions and experiences."}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
@@ -138,9 +143,11 @@ export default function ReviewsPage() {
                             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <MessageSquare className="h-10 w-10 text-gray-300" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-700 mb-2">No reviews yet</h3>
+                            <h3 className="text-xl font-bold text-gray-700 mb-2">No reviews found</h3>
                             <p className="max-w-xs mx-auto">
-                                Reviews will appear here once customers start sharing their experiences with your business.
+                                {isBusiness
+                                    ? "Reviews will appear here once customers start sharing their experiences."
+                                    : "You haven't written any reviews yet. Visit a business to leave feedback!"}
                             </p>
                         </div>
                     )}
@@ -148,4 +155,5 @@ export default function ReviewsPage() {
             </Card>
         </div>
     )
+}
 }

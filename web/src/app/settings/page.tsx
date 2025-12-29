@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,8 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [profileImage, setProfileImage] = useState<File | null>(null)
     const [profileImagePreview, setProfileImagePreview] = useState<string | null>(user?.profile_image_url || null)
+    const [business, setBusiness] = useState<any>(null)
+    const [isBusinessVisible, setIsBusinessVisible] = useState(true)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [formData, setFormData] = useState({
         first_name: user?.first_name || '',
@@ -31,6 +33,42 @@ export default function SettingsPage() {
 
     const handleImageClick = () => {
         fileInputRef.current?.click()
+    }
+
+    useEffect(() => {
+        const fetchBusiness = async () => {
+            if (user?.user_type === 'business_owner') {
+                try {
+                    const res = await apiClient.businesses.myBusiness()
+                    if (res.ok) {
+                        const data = await res.json()
+                        setBusiness(data)
+                        setIsBusinessVisible(data.is_visible)
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch business", error)
+                }
+            }
+        }
+        fetchBusiness()
+    }, [user])
+
+    const handleVisibilityToggle = async (checked: boolean) => {
+        if (!business) return
+
+        setIsBusinessVisible(checked) // Optimistic update
+
+        try {
+            const res = await apiClient.businesses.update(business.id, { is_visible: checked })
+            if (!res.ok) {
+                throw new Error("Failed to update visibility")
+            }
+            toast.success(checked ? "Business is now visible" : "Business is now hidden")
+        } catch (error) {
+            console.error(error)
+            toast.error("Failed to update visibility")
+            setIsBusinessVisible(!checked) // Revert on error
+        }
     }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,6 +123,32 @@ export default function SettingsPage() {
             </div>
 
             <div className="grid gap-6">
+                {/* Business Settings - Only for Business Owners */}
+                {user?.user_type === 'business_owner' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Business Visibility</CardTitle>
+                            <CardDescription>Control your business's visibility on the platform.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Public Listing</Label>
+                                    <p className="text-sm text-gray-500">
+                                        {isBusinessVisible
+                                            ? "Your business is currently visible to all users."
+                                            : "Your business is currently hidden from the directory."}
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={isBusinessVisible}
+                                    onCheckedChange={handleVisibilityToggle}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Profile Settings */}
                 <Card>
                     <CardHeader>

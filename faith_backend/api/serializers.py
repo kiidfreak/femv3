@@ -133,7 +133,7 @@ class BusinessSerializer(serializers.ModelSerializer):
             'category', 'category_name', 'owner_name', 'rating', 'review_count', 'view_count',
             'is_verified', 'is_featured', 'services', 'products', 'reviews', 'images',
             'business_image', 'business_logo', 'business_image_url', 'business_logo_url',
-            'is_favorite', 'report_frequency'
+            'is_favorite', 'report_frequency', 'is_visible'
         ]
 
     is_favorite = serializers.SerializerMethodField()
