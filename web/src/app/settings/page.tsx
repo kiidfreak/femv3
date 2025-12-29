@@ -78,7 +78,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="container py-12 max-w-4xl mx-auto space-y-6">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">Settings</h2>
                 <p className="text-muted-foreground">Manage your account preferences and notifications.</p>
@@ -103,7 +103,7 @@ export default function SettingsPage() {
                                     {profileImagePreview ? (
                                         <>
                                             <Image
-                                                src={getImageUrl(profileImagePreview) || profileImagePreview}
+                                                src={profileImagePreview && getImageUrl(profileImagePreview) ? getImageUrl(profileImagePreview)! : (profileImagePreview || '')}
                                                 alt="Profile"
                                                 fill
                                                 className="object-cover"
@@ -137,23 +137,25 @@ export default function SettingsPage() {
                             <Label>Phone Number</Label>
                             <Input disabled value={user?.phone || ''} className="bg-gray-50" />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="first_name">First Name</Label>
-                            <Input
-                                id="first_name"
-                                name="first_name"
-                                value={formData.first_name}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="last_name">Last Name</Label>
-                            <Input
-                                id="last_name"
-                                name="last_name"
-                                value={formData.last_name}
-                                onChange={handleChange}
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="first_name">First Name</Label>
+                                <Input
+                                    id="first_name"
+                                    name="first_name"
+                                    value={formData.first_name}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="last_name">Last Name</Label>
+                                <Input
+                                    id="last_name"
+                                    name="last_name"
+                                    value={formData.last_name}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email Address</Label>
@@ -165,8 +167,14 @@ export default function SettingsPage() {
                                 onChange={handleChange}
                             />
                         </div>
+                        <div className="grid gap-2">
+                            <Label>Location</Label>
+                            <Input disabled value="Kenya" className="bg-gray-50 text-gray-500" />
+                            <p className="text-xs text-muted-foreground">Location updates coming soon.</p>
+                        </div>
+
                         <Button
-                            className="bg-[#F58220] hover:bg-[#D66D18] w-fit min-w-[120px]"
+                            className="bg-[#F58220] hover:bg-[#D66D18] w-fit min-w-[120px] mt-2"
                             onClick={handleSubmit}
                             disabled={isLoading}
                         >
