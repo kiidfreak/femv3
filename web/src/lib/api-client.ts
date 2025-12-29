@@ -15,27 +15,29 @@ const getHeaders = () => {
 export const getImageUrl = (path?: string) => {
     if (!path) return null;
 
+    // If it's a data URI, return as-is
+    if (path.startsWith('data:')) {
+        return path;
+    }
+
+    // If it's already a full external URL (http/https), return it directly
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+    }
+
     // Handle cases where the path might be like "/media/https%3A/..." or "media/https%3A/..."
     const decoded = decodeURIComponent(path);
     const httpIndex = decoded.indexOf('http');
 
     if (httpIndex !== -1) {
         const potentialUrl = decoded.substring(httpIndex);
-        // If it's an external absolute URL (S3, etc.), use it directly
-        if (potentialUrl.includes('://') && !potentialUrl.includes('localhost') && !potentialUrl.includes('127.0.0.1')) {
+        // Extract the external URL if found
+        if (potentialUrl.includes('://')) {
             return potentialUrl;
         }
     }
 
-    if (path.startsWith('data:')) {
-        return path;
-    }
-
-    // If it's already a full local URL, return it
-    if (path.startsWith('http')) {
-        return path;
-    }
-
+    // For relative paths, prepend the base URL
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3").replace('/api/v3', '');
     return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }
