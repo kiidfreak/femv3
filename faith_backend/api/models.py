@@ -5,9 +5,9 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 import uuid
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, phone, password=None, **extra_fields):
-        if not phone:
-            raise ValueError('The Phone field must be set')
+    def create_user(self, phone=None, password=None, **extra_fields):
+        if not phone and not extra_fields.get('email'):
+            raise ValueError('Either Phone or Email must be set')
         user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -26,8 +26,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('system_admin', 'System Admin'),
     )
 
-    phone = models.CharField(max_length=20, unique=True)
-    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     partnership_number = models.CharField(max_length=50, blank=True, null=True)
@@ -206,8 +206,8 @@ class Review(models.Model):
 
 
 class PendingUser(models.Model):
-    phone = models.CharField(max_length=20, unique=True)
-    email = models.EmailField()
+    phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
     first_name = models.CharField(max_length=150, blank=True, null=True)
     partnership_number = models.CharField(max_length=50, blank=True, null=True)
     otp = models.CharField(max_length=10)

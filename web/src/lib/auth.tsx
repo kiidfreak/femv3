@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, createContext, useContext, ReactNode, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { apiClient } from "./api-client"
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<any | null>(null)
     const [loading, setLoading] = useState(true)
+    const router = useRouter()
 
     // Check for existing session on mount
     useEffect(() => {
@@ -124,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem("access_token")
         sessionStorage.removeItem("refresh_token")
         setUser(null)
+        router.push('/')
     }
 
     const updateUser = (userData: any) => {

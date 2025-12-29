@@ -32,8 +32,21 @@ export default function SignupPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.first_name || !formData.email || !formData.phone || !formData.partnership_number) {
-            toast.error("Please fill in all required fields")
+        const isPhoneRequired = method === 'phone'
+        const isEmailRequired = method === 'email'
+
+        if (!formData.first_name || !formData.partnership_number) {
+            toast.error("Please fill in Name and Partnership Number")
+            return
+        }
+
+        if (isPhoneRequired && !formData.phone) {
+            toast.error("Phone number is required")
+            return
+        }
+
+        if (isEmailRequired && !formData.email) {
+            toast.error("Email address is required")
             return
         }
 
@@ -67,7 +80,7 @@ export default function SignupPage() {
                                 onClick={() => setMethod("phone")}
                                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${method === "phone" ? "bg-white text-[#F58220] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
                             >
-                                <Phone className="h-4 w-4" /> SMS / WhatsApp
+                                <Phone className="h-4 w-4" /> SMS
                             </button>
                             <button
                                 onClick={() => setMethod("email")}
@@ -90,35 +103,39 @@ export default function SignupPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#1A1A1A] ml-1">Email Address</label>
-                            <Input
-                                placeholder="john@example.com"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#1A1A1A] ml-1">Phone Number</label>
-                            <div className="relative">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-200 pr-3 mr-3">
-                                    <span className="text-xl">🇰🇪</span>
-                                    <span className="text-sm font-bold text-gray-600">+254</span>
-                                </div>
+                        {method === 'email' && (
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-sm font-bold text-[#1A1A1A] ml-1">Email Address</label>
                                 <Input
-                                    placeholder="712 345 678"
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    className="h-12 pl-[110px] border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
+                                    placeholder="john@example.com"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="h-12 border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
                                     disabled={loading}
                                 />
                             </div>
-                        </div>
+                        )}
+
+                        {method === 'phone' && (
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-sm font-bold text-[#1A1A1A] ml-1">Phone Number</label>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-200 pr-3 mr-3">
+                                        <span className="text-xl">🇰🇪</span>
+                                        <span className="text-sm font-bold text-gray-600">+254</span>
+                                    </div>
+                                    <Input
+                                        placeholder="712 345 678"
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        className="h-12 pl-[110px] border-gray-100 focus:border-[#F58220] focus:ring-[#F58220] rounded-xl"
+                                        disabled={loading}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-2 md:col-span-2">
                             <label className="text-sm font-bold text-[#1A1A1A] ml-1">Partnership Number</label>

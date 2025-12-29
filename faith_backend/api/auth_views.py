@@ -94,21 +94,33 @@ class SignupView(APIView):
         partnership_number = request.data.get('partnership_number')
         method = request.data.get('method', 'phone')
         
-        if not phone or not email:
-            return Response({'error': 'Phone and Email are required'}, status=status.HTTP_400_BAD_REQUEST)
+        # Validate based on method
+        if method == 'email':
+            if not email:
+                return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+            if User.objects.filter(email=email).exists():
+                return Response({'error': 'Email address already registered'}, status=status.HTTP_400_BAD_REQUEST)
+            phone = None # Ensure phone is None if not provided
+        else:
+             # Phone method
+            if not phone:
+                return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
+            if User.objects.filter(phone=phone).exists():
+                return Response({'error': 'Phone number already registered'}, status=status.HTTP_400_BAD_REQUEST)
+            # Email is optional/secondary for phone signups, but check uniqueness if provided
+            if email and User.objects.filter(email=email).exists():
+                 return Response({'error': 'Email address already registered'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         if not partnership_number:
             return Response({'error': 'Partnership Number is required'}, status=status.HTTP_400_BAD_REQUEST)
             
-        if User.objects.filter(phone=phone).exists():
-            return Response({'error': 'Phone number already registered'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if email and User.objects.filter(email=email).exists():
-             return Response({'error': 'Email address already registered'}, status=status.HTTP_400_BAD_REQUEST)
-        
         try:
-            # Delete any existing pending record for this phone
-            PendingUser.objects.filter(phone=phone).delete()
+            # Delete existing pending records
+            if method == 'email':
+                PendingUser.objects.filter(email=email).delete()
+            elif phone:
+                PendingUser.objects.filter(phone=phone).delete()
             
             otp = str(random.randint(100000, 999999))
             pending_user = PendingUser.objects.create(
