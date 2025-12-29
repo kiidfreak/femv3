@@ -92,10 +92,13 @@ export default function BusinessSettingsPage() {
                             }
                         }
 
+                        console.log("Business data received:", data)
+                        console.log("Category from API:", data.category)
+
                         setFormData({
                             business_name: data.business_name || "",
                             description: cleanDescription,
-                            category_id: data.category?.id || "",
+                            category_id: data.category?.id ? String(data.category.id) : "",
                             phone: data.phone || "",
                             email: data.email || "",
                             website: data.website || "",
@@ -103,6 +106,8 @@ export default function BusinessSettingsPage() {
                             city: city,
                             county: county
                         })
+
+                        console.log("Form data set with category_id:", data.category?.id)
                         if (data.business_logo_url) {
                             setLogoPreview(data.business_logo_url)
                         }
