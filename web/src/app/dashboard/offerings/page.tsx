@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,7 +30,6 @@ import {
 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import Image from "next/image"
-import { useEffect } from "react"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
@@ -367,6 +366,12 @@ function ServiceCard({ service, onToggleStatus, onEdit }: { service: Service; on
 
 function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "products" | "services"; initialData?: any; onClose: () => void; onSuccess: () => void }) {
     const [isLoading, setIsLoading] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(
+        type === "products" ? initialData?.product_image : initialData?.service_image || null
+    )
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
     const [formData, setFormData] = useState({
         name: initialData?.name || "",
         description: initialData?.description || "",
@@ -375,6 +380,18 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
         price_range: initialData?.price_range || "",
         duration: initialData?.duration || ""
     })
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -385,26 +402,34 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
 
         setIsLoading(true)
         try {
-            const payload = type === "products" ? {
-                id: initialData?.id,
-                name: formData.name,
-                description: formData.description,
-                price: parseFloat(formData.price) || 0,
-                price_currency: formData.price_currency,
-                is_active: initialData ? initialData.is_active : true,
-                in_stock: initialData ? initialData.in_stock : true
-            } : {
-                id: initialData?.id,
-                name: formData.name,
-                description: formData.description,
-                price_range: formData.price_range,
-                duration: formData.duration,
-                is_active: initialData ? initialData.is_active : true
+            const data = new FormData()
+            data.append('name', formData.name)
+            data.append('description', formData.description)
+
+            if (type === "products") {
+                data.append('price', formData.price || "0")
+                data.append('price_currency', formData.price_currency)
+                data.append('is_active', initialData ? String(initialData.is_active) : "true")
+                data.append('in_stock', initialData ? String(initialData.in_stock) : "true")
+                if (imageFile) {
+                    data.append('product_image', imageFile)
+                }
+            } else {
+                data.append('price_range', formData.price_range)
+                data.append('duration', formData.duration)
+                data.append('is_active', initialData ? String(initialData.is_active) : "true")
+                if (imageFile) {
+                    data.append('service_image', imageFile)
+                }
+            }
+
+            if (initialData?.id) {
+                data.append('id', String(initialData.id))
             }
 
             const res = await (type === "products"
-                ? apiClient.products.save(payload)
-                : apiClient.services.save(payload))
+                ? apiClient.products.save(data)
+                : apiClient.services.save(data))
 
             if (res.ok) {
                 toast.success(`${type === "products" ? "Product" : "Service"} ${initialData ? 'updated' : 'added'} successfully!`)
@@ -443,6 +468,41 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-2">
+                <Label>{type === "products" ? "Product" : "Service"} Image</Label>
+                <div className="flex items-center gap-4">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-12"
+                    >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        {imagePreview ? "Change Image" : "Upload Image"}
+                    </Button>
+                    {imagePreview && (
+                        <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
+                            <Image
+                                src={imagePreview.startsWith('data:') ? imagePreview : `/api${imagePreview}`}
+                                alt="Preview"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
+                    )}
+                </div>
+                <p className="text-xs text-gray-500">JPG, PNG or GIF (max 5MB)</p>
             </div>
 
             {type === "products" ? (

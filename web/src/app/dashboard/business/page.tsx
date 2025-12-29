@@ -95,10 +95,18 @@ export default function BusinessSettingsPage() {
                         console.log("Business data received:", data)
                         console.log("Category from API:", data.category)
 
+                        // Handle category - can be either a number (ID) or an object with id
+                        let categoryId = ""
+                        if (typeof data.category === 'number') {
+                            categoryId = String(data.category)
+                        } else if (data.category && typeof data.category === 'object' && 'id' in data.category) {
+                            categoryId = String(data.category.id)
+                        }
+
                         setFormData({
                             business_name: data.business_name || "",
                             description: cleanDescription,
-                            category_id: data.category?.id ? String(data.category.id) : "",
+                            category_id: categoryId,
                             phone: data.phone || "",
                             email: data.email || "",
                             website: data.website || "",
@@ -107,7 +115,7 @@ export default function BusinessSettingsPage() {
                             county: county
                         })
 
-                        console.log("Form data set with category_id:", data.category?.id)
+                        console.log("Form data set with category_id:", categoryId)
                         if (data.business_logo_url) {
                             setLogoPreview(data.business_logo_url)
                         }
