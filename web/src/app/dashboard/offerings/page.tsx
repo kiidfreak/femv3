@@ -501,3 +501,21 @@ function AddOfferingForm({ type, initialData, onClose, onSuccess }: { type: "pro
         </form>
     )
 }
+
+function EmptyState({ type, onAdd }: { type: "products" | "services"; onAdd: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+            <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+                {type === "products" ? <Package className="h-8 w-8 text-gray-400" /> : <Clock className="h-8 w-8 text-gray-400" />}
+            </div>
+            <h3 className="text-lg font-bold text-[#1A1A1A]">No {type} yet</h3>
+            <p className="text-gray-500 max-w-sm mt-2 mb-6">
+                Get started by adding your first {type === "products" ? "product" : "service"}. You can add up to {type === "products" ? MAX_PRODUCTS : MAX_SERVICES} items.
+            </p>
+            <Button onClick={onAdd} className="bg-[#1A1A1A] hover:bg-black text-white font-bold h-11 px-6 rounded-xl">
+                <Plus className="mr-2 h-4 w-4" />
+                Add {type === "products" ? "Product" : "Service"}
+            </Button>
+        </div>
+    )
+}

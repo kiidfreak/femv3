@@ -37,7 +37,7 @@ interface Category {
 
 export default function BusinessOnboardingPage() {
     const router = useRouter()
-    const { updateUser } = useAuth()
+    const { user, updateUser } = useAuth()
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [categories, setCategories] = useState<Category[]>([])
@@ -86,6 +86,18 @@ export default function BusinessOnboardingPage() {
         city: "",
         county: ""
     })
+
+    // Prefill data from user profile
+    useEffect(() => {
+        if (user) {
+            setBusinessData(prev => ({
+                ...prev,
+                phone: user.phone || prev.phone,
+                email: user.email || prev.email,
+                partnership_number: user.partnership_number || prev.partnership_number
+            }))
+        }
+    }, [user])
 
     const totalSteps = 4
     const progress = (step / totalSteps) * 100
