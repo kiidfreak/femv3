@@ -91,12 +91,7 @@ export default function ReportsPage() {
         { name: 'Referral', value: stats.traffic_sources?.referral || 0, color: '#10B981' },
     ]
 
-    const heatMapData = stats.offerings_heatmap || [
-        { name: 'Holy Bible', views: 45, conversions: 12 },
-        { name: 'Study Lamp', views: 32, conversions: 8 },
-        { name: 'Journal', views: 28, conversions: 5 },
-        { name: 'Bookmarks', views: 15, conversions: 2 },
-    ]
+    const heatMapData = stats.offerings_heatmap || []
 
     return (
         <div className="container py-8 space-y-8 animate-fade-in">

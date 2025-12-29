@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth"
 import { apiClient, getImageUrl } from "@/lib/api-client"
 import { toast } from "sonner"
-import { Loader2, Upload, Building2, MapPin, Phone, Mail, Globe, Save } from "lucide-react"
+import { Loader2, Upload, Building2, MapPin, Phone, Mail, Globe, Save, Image as ImageIcon } from "lucide-react"
 import Image from "next/image"
 
 interface Category {
@@ -41,7 +41,12 @@ export default function BusinessSettingsPage() {
     // Logo State
     const [logoFile, setLogoFile] = useState<File | null>(null)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    const logoFileInputRef = useRef<HTMLInputElement>(null)
+
+    // Banner State
+    const [bannerFile, setBannerFile] = useState<File | null>(null)
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+    const bannerFileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -119,6 +124,9 @@ export default function BusinessSettingsPage() {
                         if (data.business_logo_url) {
                             setLogoPreview(data.business_logo_url)
                         }
+                        if (data.business_image_url) {
+                            setBannerPreview(data.business_image_url)
+                        }
                     }
                 } catch (error) {
                     console.error("Failed to fetch business", error)
@@ -138,16 +146,32 @@ export default function BusinessSettingsPage() {
     }
 
     const handleLogoClick = () => {
-        fileInputRef.current?.click()
+        logoFileInputRef.current?.click()
     }
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBannerClick = () => {
+        bannerFileInputRef.current?.click()
+    }
+
+    const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
             setLogoFile(file)
             const reader = new FileReader()
             reader.onloadend = () => {
                 setLogoPreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setBannerFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setBannerPreview(reader.result as string)
             }
             reader.readAsDataURL(file)
         }
@@ -177,6 +201,10 @@ export default function BusinessSettingsPage() {
 
             if (logoFile) {
                 data.append('business_logo', logoFile)
+            }
+
+            if (bannerFile) {
+                data.append('business_image', bannerFile)
             }
 
             const res = await apiClient.businesses.update(business.id, data)
@@ -258,10 +286,10 @@ export default function BusinessSettingsPage() {
                                     )}
                                 </div>
                                 <input
-                                    ref={fileInputRef}
+                                    ref={logoFileInputRef}
                                     type="file"
                                     accept="image/*"
-                                    onChange={handleFileChange}
+                                    onChange={handleLogoFileChange}
                                     className="hidden"
                                 />
                                 <div className="flex-1">
@@ -269,6 +297,45 @@ export default function BusinessSettingsPage() {
                                     <p className="text-xs text-gray-500">Recommended 500x500px. formats: JPG, PNG.</p>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Banner Image Upload */}
+                        <div className="grid gap-2">
+                            <Label>Banner Image</Label>
+                            <div className="flex items-center gap-4">
+                                <div
+                                    onClick={handleBannerClick}
+                                    className="relative w-full h-32 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 hover:border-[#F58220] cursor-pointer transition-colors overflow-hidden group flex items-center justify-center"
+                                >
+                                    {bannerPreview ? (
+                                        <>
+                                            <Image
+                                                src={getImageUrl(bannerPreview) || bannerPreview}
+                                                alt="Banner"
+                                                fill
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Upload className="h-6 w-6 text-white" />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-center">
+                                            <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                            <p className="text-sm text-gray-500">Click to upload banner</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <input
+                                    ref={bannerFileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleBannerFileChange}
+                                    className="hidden"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">Recommended 1200x400px. Used as hero image on your business page.</p>
                         </div>
 
                         <div className="grid gap-2">

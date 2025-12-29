@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2, ArrowRight, Image as ImageIcon } from "lucide-react"
+import { ShieldCheck, TrendingUp, ThumbsUp, Eye, Users, Package, Store, Sparkles, Loader2, ArrowRight, Image as ImageIcon, Settings } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
@@ -235,32 +235,32 @@ function DashboardContent() {
                     </Card>
                 </Link>
 
-                <Link href="/dashboard/settings" className="block">
-                    <Card className="border-2 border-gray-100 hover:border-gray-500 hover:shadow-xl transition-all cursor-pointer group h-full">
+                <Link href="/dashboard/gallery" className="block">
+                    <Card className="border-2 border-orange-100 hover:border-[#F58220] hover:shadow-xl transition-all cursor-pointer group h-full">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-lg font-bold text-[#1A1A1A] group-hover:text-gray-600 transition-colors">Settings</h3>
-                                    <p className="text-sm text-gray-500 mt-1">Update profile & alerts</p>
+                                    <h3 className="text-lg font-bold text-[#1A1A1A] group-hover:text-[#F58220] transition-colors">Banner Image</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Manage profile banner</p>
                                 </div>
-                                <div className="h-10 w-10 bg-gray-50 group-hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors shrink-0">
-                                    <Users className="h-5 w-5 text-gray-600" />
+                                <div className="h-10 w-10 bg-orange-50 group-hover:bg-orange-100 rounded-xl flex items-center justify-center transition-colors shrink-0">
+                                    <ImageIcon className="h-5 w-5 text-[#F58220]" />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
                 </Link>
 
-                <Link href="/dashboard/gallery" className="block">
-                    <Card className="border-2 border-orange-100 hover:border-[#F58220] hover:shadow-xl transition-all cursor-pointer group h-full">
+                <Link href="/dashboard/business" className="block">
+                    <Card className="border-2 border-purple-100 hover:border-purple-500 hover:shadow-xl transition-all cursor-pointer group h-full">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-lg font-bold text-[#1A1A1A] group-hover:text-[#F58220] transition-colors">Business Gallery</h3>
-                                    <p className="text-sm text-gray-500 mt-1">Manage image portfolio</p>
+                                    <h3 className="text-lg font-bold text-[#1A1A1A] group-hover:text-purple-600 transition-colors">Business Settings</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Manage business profile</p>
                                 </div>
-                                <div className="h-10 w-10 bg-orange-50 group-hover:bg-orange-100 rounded-xl flex items-center justify-center transition-colors shrink-0">
-                                    <ImageIcon className="h-5 w-5 text-[#F58220]" />
+                                <div className="h-10 w-10 bg-purple-50 group-hover:bg-purple-100 rounded-xl flex items-center justify-center transition-colors shrink-0">
+                                    <Settings className="h-5 w-5 text-purple-600" />
                                 </div>
                             </div>
                         </CardContent>
@@ -285,11 +285,10 @@ function DashboardContent() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
                     { label: 'Total Views', value: stats.total_views.toLocaleString(), icon: Eye, color: 'text-[#F58220]', bg: 'bg-[#F58220]/10' },
                     { label: 'Likes', value: stats.likes.toLocaleString(), icon: ThumbsUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Church Groups', value: stats.church_groups, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
                     { label: 'Trust Score', value: `${stats.trust_score}/100`, icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50' },
                 ].map((stat, i) => (
                     <Card key={i} className="border-none shadow-lg hover:shadow-xl transition-shadow">
