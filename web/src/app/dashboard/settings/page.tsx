@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,6 @@ import { useAuth } from "@/lib/auth"
 import { apiClient, getImageUrl } from "@/lib/api-client"
 import { toast } from "sonner"
 import { Loader2, Upload, User as UserIcon } from "lucide-react"
-import { useRef } from "react"
 import Image from "next/image"
 
 export default function SettingsPage() {
@@ -18,9 +17,8 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [profileImage, setProfileImage] = useState<File | null>(null)
     const [profileImagePreview, setProfileImagePreview] = useState<string | null>(user?.profile_image_url || null)
-    const [business, setBusiness] = useState<any>(null)
-    const [isBusinessVisible, setIsBusinessVisible] = useState(true)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Notifications State
     const [formData, setFormData] = useState({
         first_name: user?.first_name || '',
         last_name: user?.last_name || '',
@@ -28,6 +26,8 @@ export default function SettingsPage() {
         email_notifications: user?.email_notifications ?? true,
         sms_notifications: user?.sms_notifications ?? true,
     })
+
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -53,42 +53,6 @@ export default function SettingsPage() {
             setProfileImagePreview(user.profile_image_url || null)
         }
     }, [user])
-
-    useEffect(() => {
-        const fetchBusiness = async () => {
-            if (user?.user_type === 'business_owner') {
-                try {
-                    const res = await apiClient.businesses.myBusiness()
-                    if (res.ok) {
-                        const data = await res.json()
-                        setBusiness(data)
-                        setIsBusinessVisible(data.is_visible)
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch business", error)
-                }
-            }
-        }
-        fetchBusiness()
-    }, [user])
-
-    const handleVisibilityToggle = async (checked: boolean) => {
-        if (!business) return
-
-        setIsBusinessVisible(checked) // Optimistic update
-
-        try {
-            const res = await apiClient.businesses.update(business.id, { is_visible: checked })
-            if (!res.ok) {
-                throw new Error("Failed to update visibility")
-            }
-            toast.success(checked ? "Business is now visible" : "Business is now hidden")
-        } catch (error) {
-            console.error(error)
-            toast.error("Failed to update visibility")
-            setIsBusinessVisible(!checked) // Revert on error
-        }
-    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -139,37 +103,11 @@ export default function SettingsPage() {
     return (
         <div className="container py-12 max-w-4xl mx-auto space-y-6">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">Settings</h2>
-                <p className="text-muted-foreground">Manage your account preferences and notifications.</p>
+                <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">Account Settings</h2>
+                <p className="text-muted-foreground">Manage your personal profile and preferences.</p>
             </div>
 
             <div className="grid gap-6">
-                {/* Business Settings - Only for Business Owners */}
-                {user?.user_type === 'business_owner' && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Business Visibility</CardTitle>
-                            <CardDescription>Control your business's visibility on the platform.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="text-base">Public Listing</Label>
-                                    <p className="text-sm text-gray-500">
-                                        {isBusinessVisible
-                                            ? "Your business is currently visible to all users."
-                                            : "Your business is currently hidden from the directory."}
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={isBusinessVisible}
-                                    onCheckedChange={handleVisibilityToggle}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
                 {/* Profile Settings */}
                 <Card>
                     <CardHeader>
@@ -188,7 +126,7 @@ export default function SettingsPage() {
                                     {profileImagePreview ? (
                                         <>
                                             <Image
-                                                src={profileImagePreview && getImageUrl(profileImagePreview) ? getImageUrl(profileImagePreview)! : (profileImagePreview || '')}
+                                                src={getImageUrl(profileImagePreview) || (profileImagePreview || '')}
                                                 alt="Profile"
                                                 fill
                                                 className="object-cover"

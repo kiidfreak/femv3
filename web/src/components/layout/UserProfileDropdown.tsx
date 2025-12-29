@@ -176,7 +176,7 @@ export function UserProfileDropdown() {
                                     </Button>
                                 </Link>
                             ) : (
-                                <Link href="/settings">
+                                <Link href="/dashboard/settings">
                                     <Button
                                         size="sm"
                                         className="w-full mt-2 border border-gray-200 hover:bg-gray-50 text-gray-700 h-8 text-xs"
@@ -231,7 +231,7 @@ export function UserProfileDropdown() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="/dashboard" className="cursor-pointer">
+                            <Link href="/dashboard/business" className="cursor-pointer">
                                 <Building2 className="mr-2 h-4 w-4" />
                                 My Business
                             </Link>
@@ -261,7 +261,7 @@ export function UserProfileDropdown() {
                 )}
 
                 <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/dashboard/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                     </Link>
