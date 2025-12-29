@@ -126,7 +126,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Hero stats={stats} />
+      <Hero stats={stats} recentMembers={recentMembers} />
 
       {/* Featured Categories */}
       <section className="container py-20">

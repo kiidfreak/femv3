@@ -127,7 +127,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
         profile_score_normalized = min(20, (profile_score / 40) * 20)
         
         # Reviews score (max 25)
-        reviews_score = min(25, (business.rating * (min(business.review_count, 10) / 10) / 5) * 25)
+        reviews_score = min(25, (float(business.rating) * (min(business.review_count, 10) / 10) / 5) * 25)
         
         # Account age (max 15) - Real calculation
         if business.created_at:

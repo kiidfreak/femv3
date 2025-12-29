@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export function Hero({ stats = { total_members: 0 } }: { stats?: { total_members: number } }) {
+export function Hero({ stats = { total_members: 0 }, recentMembers = [] }: { stats?: { total_members: number }, recentMembers?: any[] }) {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchType, setSearchType] = useState<"businesses" | "offerings">("businesses")
     const router = useRouter()
@@ -83,11 +83,23 @@ export function Hero({ stats = { total_members: 0 } }: { stats?: { total_members
 
                         <div className="flex flex-wrap gap-4 items-center">
                             <div className="flex -space-x-3">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="h-12 w-12 rounded-full border-4 border-white bg-gray-100 overflow-hidden">
-                                        <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="User" className="h-full w-full object-cover" />
-                                    </div>
-                                ))}
+                                {recentMembers.length > 0 ? (
+                                    recentMembers.map((member, idx) => (
+                                        <div key={idx} className="h-12 w-12 rounded-full border-4 border-white bg-gray-100 overflow-hidden shadow-lg transform hover:scale-110 transition-transform duration-300">
+                                            {member.profile_image_url ? (
+                                                <img src={member.profile_image_url} alt={member.first_name || 'User'} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-[#F58220] text-white font-bold text-lg">
+                                                    {member.first_name?.charAt(0) || 'U'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    [1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="h-12 w-12 rounded-full border-4 border-white bg-gray-200 animate-pulse" />
+                                    ))
+                                )}
                             </div>
                             <p className="text-sm font-bold text-gray-500">
                                 Joined by <span className="text-[#F58220]">{stats.total_members.toLocaleString()}+</span> community members
