@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile', 'profile_image', 'profile_image_url']
+        fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile', 'profile_image', 'profile_image_url', 'email', 'email_notifications', 'sms_notifications']
 
 class CategorySerializer(serializers.ModelSerializer):
     business_count = serializers.IntegerField(read_only=True)

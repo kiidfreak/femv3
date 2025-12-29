@@ -25,15 +25,34 @@ export default function SettingsPage() {
         first_name: user?.first_name || '',
         last_name: user?.last_name || '',
         email: user?.email || '',
+        email_notifications: user?.email_notifications ?? true,
+        sms_notifications: user?.sms_notifications ?? true,
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
+    const handleSwitchChange = (name: string, checked: boolean) => {
+        setFormData({ ...formData, [name]: checked })
+    }
+
     const handleImageClick = () => {
         fileInputRef.current?.click()
     }
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                first_name: user.first_name || '',
+                last_name: user.last_name || '',
+                email: user.email || '',
+                email_notifications: user.email_notifications ?? true,
+                sms_notifications: user.sms_notifications ?? true,
+            })
+            setProfileImagePreview(user.profile_image_url || null)
+        }
+    }, [user])
 
     useEffect(() => {
         const fetchBusiness = async () => {
@@ -90,6 +109,8 @@ export default function SettingsPage() {
             data.append('first_name', formData.first_name)
             data.append('last_name', formData.last_name)
             if (formData.email) data.append('email', formData.email)
+            data.append('email_notifications', String(formData.email_notifications))
+            data.append('sms_notifications', String(formData.sms_notifications))
             if (profileImage) {
                 data.append('profile_image', profileImage)
             }
@@ -222,6 +243,17 @@ export default function SettingsPage() {
                             </div>
                         </div>
                         <div className="grid gap-2">
+                            <Label htmlFor="partnership_number">Partnership Number</Label>
+                            <Input
+                                id="partnership_number"
+                                name="partnership_number"
+                                value={user?.partnership_number || ''}
+                                disabled
+                                className="bg-gray-50"
+                            />
+                            <p className="text-xs text-muted-foreground">This number is unique to you and cannot be changed.</p>
+                        </div>
+                        <div className="grid gap-2">
                             <Label htmlFor="email">Email Address</Label>
                             <Input
                                 id="email"
@@ -259,14 +291,20 @@ export default function SettingsPage() {
                                 <Label>Email Notifications</Label>
                                 <p className="text-sm text-gray-500">Receive updates via email</p>
                             </div>
-                            <Switch />
+                            <Switch
+                                checked={formData.email_notifications}
+                                onCheckedChange={(checked) => handleSwitchChange('email_notifications', checked)}
+                            />
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label>SMS Notifications</Label>
                                 <p className="text-sm text-gray-500">Receive critical alerts via SMS</p>
                             </div>
-                            <Switch defaultChecked />
+                            <Switch
+                                checked={formData.sms_notifications}
+                                onCheckedChange={(checked) => handleSwitchChange('sms_notifications', checked)}
+                            />
                         </div>
                     </CardContent>
                 </Card>

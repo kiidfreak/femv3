@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
     return (
@@ -8,10 +9,15 @@ export function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Brand Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            {/* Placeholder for Logo if needed, or just text */}
-                            <div className="bg-[#F58220] p-1.5 rounded-lg">
-                                <span className="font-bold text-xl text-white">FC</span>
+                        <div className="flex items-center gap-3">
+                            {/* Brand Logo */}
+                            <div className="relative w-10 h-10">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Faith Connect Logo"
+                                    fill
+                                    className="object-contain"
+                                />
                             </div>
                             <span className="font-bold text-xl">Faith Connect</span>
                         </div>

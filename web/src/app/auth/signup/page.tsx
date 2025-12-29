@@ -32,7 +32,7 @@ export default function SignupPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.first_name || !formData.email || !formData.phone) {
+        if (!formData.first_name || !formData.email || !formData.phone || !formData.partnership_number) {
             toast.error("Please fill in all required fields")
             return
         }
@@ -121,7 +121,7 @@ export default function SignupPage() {
                         </div>
 
                         <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-bold text-[#1A1A1A] ml-1">Partnership Number (Optional)</label>
+                            <label className="text-sm font-bold text-[#1A1A1A] ml-1">Partnership Number</label>
                             <Input
                                 placeholder="FEM-XXXXX"
                                 value={formData.partnership_number}

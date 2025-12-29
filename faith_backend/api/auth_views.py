@@ -96,6 +96,9 @@ class SignupView(APIView):
         
         if not phone or not email:
             return Response({'error': 'Phone and Email are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not partnership_number:
+            return Response({'error': 'Partnership Number is required'}, status=status.HTTP_400_BAD_REQUEST)
             
         if User.objects.filter(phone=phone).exists():
             return Response({'error': 'Phone number already registered'}, status=status.HTTP_400_BAD_REQUEST)
@@ -237,26 +240,41 @@ class UpdateProfileView(APIView):
                 'user_type': user.user_type,
                 'phone_verified': user.phone_verified,
                 'has_business_profile': user.has_business_profile,
-                'is_verified': user.is_verified # Church verification
+                'is_verified': user.is_verified, # Church verification
+                'profile_image_url': user.profile_image.url if user.profile_image else None,
+                'email_notifications': user.email_notifications,
+                'sms_notifications': user.sms_notifications
             }
         })
 
     def patch(self, request):
         user = request.user
-        user_type = request.data.get('user_type')
-        first_name = request.data.get('first_name')
-        email = request.data.get('email')
         
+        # Handle simple fields
+        user_type = request.data.get('user_type')
         if user_type:
             if user_type not in ['member', 'business_owner', 'church_admin']:
                 return Response({'error': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
             user.user_type = user_type
-        
-        if first_name:
-            user.first_name = first_name
+
+        # Use getattr/setattr or direct assignment for other fields
+        fields_to_update = ['first_name', 'last_name', 'email', 'partnership_number']
+        for field in fields_to_update:
+            if field in request.data:
+                setattr(user, field, request.data.get(field))
+
+        # Handle boolean fields properly (form-data sends strings 'true'/'false')
+        if 'email_notifications' in request.data:
+            val = request.data.get('email_notifications')
+            user.email_notifications = str(val).lower() == 'true'
             
-        if email:
-            user.email = email
+        if 'sms_notifications' in request.data:
+            val = request.data.get('sms_notifications')
+            user.sms_notifications = str(val).lower() == 'true'
+
+        # Handle file upload
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
             
         user.save()
             
@@ -267,9 +285,14 @@ class UpdateProfileView(APIView):
                 'phone': user.phone,
                 'email': user.email,
                 'first_name': user.first_name,
+                'last_name': user.last_name,
                 'user_type': user.user_type,
                 'phone_verified': user.phone_verified,
                 'has_business_profile': user.has_business_profile,
-                'is_verified': user.is_verified
+                'is_verified': user.is_verified,
+                'profile_image_url': user.profile_image.url if user.profile_image else None,
+                'email_notifications': user.email_notifications,
+                'sms_notifications': user.sms_notifications
             }
         })
+

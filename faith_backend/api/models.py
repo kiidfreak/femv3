@@ -37,6 +37,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verified = models.BooleanField(default=False)  # Email verification status
     phone_verified = models.BooleanField(default=False)  # Phone verification status
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True, db_column='profile_image_url')
+    email_notifications = models.BooleanField(default=True)
+    sms_notifications = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

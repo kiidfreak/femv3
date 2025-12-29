@@ -27,6 +27,10 @@ export const getImageUrl = (path?: string) => {
         }
     }
 
+    if (path.startsWith('data:')) {
+        return path;
+    }
+
     // If it's already a full local URL, return it
     if (path.startsWith('http')) {
         return path;
