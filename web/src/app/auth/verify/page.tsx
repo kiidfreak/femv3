@@ -75,16 +75,23 @@ function VerifyOTPContent() {
             if (isFromSignup) {
                 router.push("/auth/account-type")
             } else {
-                // For EXISTING users logging in: direct based on user_type
-                if (user.user_type === 'business_owner') {
-                    if (user.has_business_profile) {
-                        router.push("/dashboard")
-                    } else {
-                        router.push("/onboarding/business")
-                    }
-                } else {
-                    // Community members go to directory
-                    router.push("/directory")
+                // For EXISTING users: route based on backend-assigned role
+                switch (user.user_type) {
+                    case 'business_owner':
+                        if (user.has_business_profile) {
+                            router.push("/dashboard")
+                        } else {
+                            router.push("/onboarding/business")
+                        }
+                        break;
+                    case 'church_admin':
+                    case 'system_admin':
+                        // Admins go to the verification management panel
+                        router.push("/admin/verifications")
+                        break;
+                    default:
+                        // Regular community members go to the directory
+                        router.push("/directory")
                 }
             }
         } catch (err: any) {
