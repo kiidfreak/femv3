@@ -27,9 +27,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-created_at')
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny] # Refine in production
+    ordering = ['-created_at']
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def recent_members(self, request):

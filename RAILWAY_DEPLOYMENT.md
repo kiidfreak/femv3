@@ -31,6 +31,7 @@ The platform consists of:
 | `AWS_ACCESS_KEY_ID` | From AWS IAM |
 | `AWS_SECRET_ACCESS_KEY` | From AWS IAM |
 | `SMS_API_KEY` | From Ndovubase |
+| `MOCK_SMS` | Set to `True` for testing without real SMS |
 
 ---
 
