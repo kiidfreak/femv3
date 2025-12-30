@@ -178,6 +178,9 @@ class BusinessImage(models.Model):
         db_table = 'business_image'
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f"Image for {self.business.business_name}"
+
 class Service(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='services')
     name = models.CharField(max_length=255)
@@ -191,6 +194,9 @@ class Service(models.Model):
     class Meta:
         db_table = 'business_service'
         ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.business.business_name})"
 
 class Product(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='products')
@@ -206,6 +212,9 @@ class Product(models.Model):
     class Meta:
         db_table = 'business_product'
         ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.business.business_name})"
 
 class Review(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reviews')
@@ -234,6 +243,9 @@ class PendingUser(models.Model):
     otp = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.phone or self.email or "Pending User"
+
     class Meta:
         db_table = 'pending_user'
 
@@ -243,6 +255,10 @@ class Favorite(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorited_by', null=True, blank=True)
     service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='favorited_by', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        target = self.business or self.product or self.service
+        return f"{self.user} liked {target}"
 
     class Meta:
         db_table = 'business_favorite'
