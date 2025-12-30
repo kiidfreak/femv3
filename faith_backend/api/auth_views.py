@@ -33,7 +33,7 @@ def send_sms_otp(phone, otp):
     }
     
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=30)
         if response.status_code in [200, 201]:
             print(f"DEBUG: SMS Sent to {phone} successfully: {otp}")
             return True

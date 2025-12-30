@@ -67,8 +67,9 @@ WSGI_APPLICATION = 'faith_connect_api.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://postgres:EQnOgRPMvZTtyDhlUHOcgpNSsVXwYOtR@centerbeam.proxy.rlwy.net:22007/railway'),
-        conn_max_age=600
+        default='postgresql://postgres:EQnOgRPMvZTtyDhlUHOcgpNSsVXwYOtR@centerbeam.proxy.rlwy.net:22007/railway',
+        conn_max_age=600,
+        conn_health_checks=True,
     )
 }
 
