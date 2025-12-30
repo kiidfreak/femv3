@@ -58,6 +58,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def has_business_profile(self):
         return self.businesses.exists()
 
+    def __str__(self):
+        return self.phone or self.email or f"User {self.id}"
+
     class Meta:
         db_table = 'user_auth_user'
 
@@ -65,6 +68,9 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         db_table = 'business_category'
@@ -119,6 +125,9 @@ class Business(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.business_name
 
     @property
     def trust_score(self):
@@ -208,6 +217,9 @@ class Review(models.Model):
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Review for {self.business.business_name} by {self.user}"
 
     class Meta:
         db_table = 'business_review'

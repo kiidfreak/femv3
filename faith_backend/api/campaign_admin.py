@@ -35,7 +35,18 @@ class CampaignAdmin(admin.ModelAdmin):
     )
     
     inlines = [CampaignActionInline, RewardInline]
-    
+    actions = ['activate_campaigns', 'pause_campaigns']
+
+    @admin.action(description="Activate selected campaigns")
+    def activate_campaigns(self, request, queryset):
+        queryset.update(status='active')
+        self.message_user(request, "Selected campaigns have been activated.")
+
+    @admin.action(description="Pause selected campaigns")
+    def pause_campaigns(self, request, queryset):
+        queryset.update(status='paused')
+        self.message_user(request, "Selected campaigns have been paused.")
+
     def save_model(self, request, obj, form, change):
         if not change:  # New campaign
             obj.created_by = request.user
