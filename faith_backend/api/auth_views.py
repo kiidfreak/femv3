@@ -17,26 +17,31 @@ def send_sms_otp(phone, otp):
     """
     Sends SMS via Ndovubase API
     """
-    api_key = settings.SMS_API_KEY
-    sender_id = settings.SMS_FROM_NUMBER
+    api_key = settings.NDOVUBASE_API_KEY or settings.SMS_API_KEY
+    sender_id = settings.NDOVUBASE_SENDER_ID or settings.SMS_FROM_NUMBER
     
-    # Typical Ndovubase/Kenia SMS Gateway structure
-    url = "https://api.ndovubase.com/v1/sms/send" # Placeholder URL
+    if not api_key:
+        print("ERROR: SMS_API_KEY not configured")
+        return False
+        
+    url = "https://api.ndovubase.com/v1/sms/send"
     payload = {
         "api_key": api_key,
-        "username": "faithconnect", # Derived from context
         "sender_id": sender_id,
         "message": f"Your Faith Connect verification code is: {otp}. Valid for 10 minutes.",
         "phone": phone
     }
     
     try:
-        # response = requests.post(url, json=payload)
-        # return response.status_code == 200
-        print(f"DEBUG: SMS Sent to {phone} via Ndovubase: {otp}")
-        return True
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code in [200, 201]:
+            print(f"DEBUG: SMS Sent to {phone} successfully: {otp}")
+            return True
+        else:
+            print(f"ERROR: Ndovubase API returned {response.status_code}: {response.text}")
+            return False
     except Exception as e:
-        print(f"ERROR: Failed to send SMS: {e}")
+        print(f"ERROR: Failed to send SMS: {str(e)}")
         return False
 
 def send_email_otp(email, otp, first_name, template_id=None):

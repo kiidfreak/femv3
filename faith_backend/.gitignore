@@ -153,8 +153,6 @@ cython_debug/
 backups/
 *.dump
 *.sql
-*.txt
-*.json
 schema.py
 schema_utf8.py
 test_db.py

@@ -1,0 +1,59 @@
+{
+  "business_product": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "name",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "price",
+      "type": "numeric",
+      "nullable": "NO"
+    },
+    {
+      "name": "price_currency",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "product_image_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "in_stock",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "business_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "name": "images",
+      "type": "jsonb",
+      "nullable": "NO"
+    }
+  ]
+}

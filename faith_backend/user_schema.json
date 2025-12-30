@@ -1,0 +1,129 @@
+{
+  "user_auth_user": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "password",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_superuser",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "first_name",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "last_name",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "partnership_number",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "email",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "phone",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "user_type",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "profile_image_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "bio",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "county",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "city",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "otp",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "email_token",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "is_verified",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "email_verified",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "phone_verified",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_staff",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "last_login",
+      "type": "timestamp with time zone",
+      "nullable": "YES"
+    },
+    {
+      "name": "website",
+      "type": "character varying",
+      "nullable": "YES"
+    }
+  ]
+}

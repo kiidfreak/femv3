@@ -1,0 +1,296 @@
+{
+  "business_business": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "name": "business_name",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "description",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "long_description",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "phone",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "email",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "website",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "name": "city",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "county",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "state",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "zip_code",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "latitude",
+      "type": "numeric",
+      "nullable": "YES"
+    },
+    {
+      "name": "longitude",
+      "type": "numeric",
+      "nullable": "YES"
+    },
+    {
+      "name": "rating",
+      "type": "numeric",
+      "nullable": "NO"
+    },
+    {
+      "name": "review_count",
+      "type": "integer",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_verified",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_featured",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "business_image_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "business_logo_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "category_id",
+      "type": "bigint",
+      "nullable": "YES"
+    },
+    {
+      "name": "user_id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "facebook_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "instagram_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "twitter_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "youtube_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "business_type",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "online_details",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "church_affiliation",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "linkedin_url",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "location_type",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "subcategory",
+      "type": "character varying",
+      "nullable": "YES"
+    }
+  ],
+  "user_user": [],
+  "business_category": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "name",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "slug",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": "YES"
+    }
+  ],
+  "business_review": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "rating",
+      "type": "integer",
+      "nullable": "NO"
+    },
+    {
+      "name": "review_text",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "is_verified",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "business_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "name": "user_id",
+      "type": "bigint",
+      "nullable": "NO"
+    }
+  ],
+  "business_service": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "nullable": "NO"
+    },
+    {
+      "name": "name",
+      "type": "character varying",
+      "nullable": "NO"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "name": "price_range",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "duration",
+      "type": "character varying",
+      "nullable": "YES"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": "NO"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    },
+    {
+      "name": "business_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "name": "images",
+      "type": "jsonb",
+      "nullable": "NO"
+    },
+    {
+      "name": "service_image_url",
+      "type": "character varying",
+      "nullable": "YES"
+    }
+  ]
+}
