@@ -30,4 +30,4 @@ RUN python manage.py collectstatic --noinput || true
 EXPOSE 8000
 
 # Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "faith_connect_api.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "60", "faith_connect_api.wsgi:application"]

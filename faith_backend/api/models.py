@@ -8,6 +8,11 @@ class CustomUserManager(BaseUserManager):
     def create_user(self, phone=None, password=None, **extra_fields):
         if not phone and not extra_fields.get('email'):
             raise ValueError('Either Phone or Email must be set')
+        
+        # Ensure partnership_number exists for users
+        if not extra_fields.get('partnership_number'):
+            extra_fields['partnership_number'] = f"MEM-{random.randint(1000, 9999)}"
+            
         user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -209,7 +214,7 @@ class PendingUser(models.Model):
     phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     first_name = models.CharField(max_length=150, blank=True, null=True)
-    partnership_number = models.CharField(max_length=50, blank=True, null=True)
+    partnership_number = models.CharField(max_length=50, blank=True, null=True, default='PENDING')
     otp = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
