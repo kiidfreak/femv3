@@ -157,6 +157,7 @@ class Business(models.Model):
 
     class Meta:
         db_table = 'business_business'
+        ordering = ['-is_verified', '-rating', '-created_at']
 
 class BusinessImage(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='images')
@@ -180,6 +181,7 @@ class Service(models.Model):
 
     class Meta:
         db_table = 'business_service'
+        ordering = ['-created_at']
 
 class Product(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='products')
@@ -194,6 +196,7 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'business_product'
+        ordering = ['-created_at']
 
 class Review(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='reviews')
@@ -208,6 +211,7 @@ class Review(models.Model):
 
     class Meta:
         db_table = 'business_review'
+        ordering = ['-created_at']
 
 
 class PendingUser(models.Model):

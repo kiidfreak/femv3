@@ -3,6 +3,33 @@ from .models import User, Business, BusinessImage, Category, Service, Product, R
 from django.contrib.auth.models import Permission
 from .roles import Role, UserRole
 
+import os
+
+def get_clean_image_url(image_field, request=None):
+    if not image_field:
+        return None
+    
+    url = str(image_field)
+    
+    # If it's already an absolute URL, return it (fixing potential path flattening)
+    if 'http' in url:
+        # Fix missing slash if it looks like https:/
+        if 'http:/' in url and 'http://' not in url:
+            url = url.replace('http:/', 'http://')
+        if 'https:/' in url and 'https://' not in url:
+            url = url.replace('https:/', 'https://')
+        
+        # Ensure it doesn't have double /media/ prefix
+        if url.startswith('/media/http'):
+            url = url.replace('/media/', '', 1)
+            
+        return url
+    
+    # Otherwise, use standard DRF building logic
+    if request:
+        return request.build_absolute_uri(image_field.url)
+    return image_field.url
+
 class UserSerializer(serializers.ModelSerializer):
     has_business_profile = serializers.SerializerMethodField()
     profile_image = serializers.ImageField(required=False)
@@ -14,6 +41,10 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'phone', 'first_name', 'last_name', 'partnership_number', 'user_type', 'is_verified', 'has_business_profile', 'profile_image', 'profile_image_url', 'email', 'email_notifications', 'sms_notifications']
+
+    profile_image_url = serializers.SerializerMethodField()
+    def get_profile_image_url(self, obj):
+        return get_clean_image_url(obj.profile_image, self.context.get('request'))
 
 class CategorySerializer(serializers.ModelSerializer):
     business_count = serializers.IntegerField(read_only=True)
@@ -34,6 +65,10 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = ['id', 'business', 'business_name', 'name', 'description', 'price_range', 'duration', 'service_image', 'service_image_url', 'is_active', 'is_favorite']
         read_only_fields = ['business']
 
+    service_image_url = serializers.SerializerMethodField()
+    def get_service_image_url(self, obj):
+        return get_clean_image_url(obj.service_image, self.context.get('request'))
+
     is_favorite = serializers.SerializerMethodField()
     def get_is_favorite(self, obj):
         request = self.context.get('request')
@@ -51,6 +86,10 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'business', 'business_name', 'name', 'description', 'price', 'price_currency', 'product_image', 'product_image_url', 'is_active', 'in_stock', 'is_favorite']
         read_only_fields = ['business']
+
+    product_image_url = serializers.SerializerMethodField()
+    def get_product_image_url(self, obj):
+        return get_clean_image_url(obj.product_image, self.context.get('request'))
 
     is_favorite = serializers.SerializerMethodField()
     def get_is_favorite(self, obj):
@@ -92,6 +131,15 @@ class BusinessListSerializer(serializers.ModelSerializer):
         ]
 
     is_favorite = serializers.SerializerMethodField()
+    business_image_url = serializers.SerializerMethodField()
+    business_logo_url = serializers.SerializerMethodField()
+
+    def get_business_image_url(self, obj):
+        return get_clean_image_url(obj.business_image, self.context.get('request'))
+
+    def get_business_logo_url(self, obj):
+        return get_clean_image_url(obj.business_logo, self.context.get('request'))
+
     def get_is_favorite(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -104,6 +152,10 @@ class BusinessImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessImage
         fields = ['id', 'image', 'image_url', 'caption', 'created_at']
+
+    image_url = serializers.SerializerMethodField()
+    def get_image_url(self, obj):
+        return get_clean_image_url(obj.image, self.context.get('request'))
 
 class BusinessSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -135,6 +187,15 @@ class BusinessSerializer(serializers.ModelSerializer):
             'business_image', 'business_logo', 'business_image_url', 'business_logo_url',
             'is_favorite', 'report_frequency', 'is_visible'
         ]
+
+    business_image_url = serializers.SerializerMethodField()
+    business_logo_url = serializers.SerializerMethodField()
+
+    def get_business_image_url(self, obj):
+        return get_clean_image_url(obj.business_image, self.context.get('request'))
+
+    def get_business_logo_url(self, obj):
+        return get_clean_image_url(obj.business_logo, self.context.get('request'))
 
     is_favorite = serializers.SerializerMethodField()
     def get_is_favorite(self, obj):
