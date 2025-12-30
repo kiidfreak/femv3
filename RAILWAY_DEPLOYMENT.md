@@ -55,7 +55,14 @@ Once deployed, the primary administrative interface (Django Admin) is available 
 
 **`https://your-backend-service.railway.app/admin/`**
 
-*Note: You must create a superuser via the Railway terminal `python manage.py createsuperuser` after the initial deploy.*
+### 🔑 Seeding the Admin Account
+To quickly create a master login on Railway:
+1.  Go to the **Railway Console**.
+2.  Open the **Backend Service**.
+3.  Click on **CMD / Terminal**.
+4.  Run: `python manage.py seed_admin`
+
+*Note: This command uses default values if environment variables `ADMIN_PHONE` and `ADMIN_PASSWORD` are not set.*
 
 ---
 

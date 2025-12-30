@@ -168,3 +168,5 @@ remote_*.json
 remote_*.txt
 *.pyc
 __pycache__/
+staticfiles/
+media/
