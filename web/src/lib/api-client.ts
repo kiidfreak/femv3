@@ -15,29 +15,27 @@ const getHeaders = () => {
 export const getImageUrl = (path?: string) => {
     if (!path) return null;
 
-    // If it's a data URI, return as-is
-    if (path.startsWith('data:')) {
+    // 1. Check if it's already an absolute URL
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
         return path;
     }
 
-    // If it's already a full external URL (http/https), return it directly
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
-    }
-
-    // Handle cases where the path might be like "/media/https%3A/..." or "media/https%3A/..."
-    const decoded = decodeURIComponent(path);
-    const httpIndex = decoded.indexOf('http');
-
+    // 2. Look for buried URLs (e.g., "/media/https://..." or "/media/https:/...")
+    // This happens when database has absolute URLs but Django is in local media mode
+    const httpIndex = path.indexOf('http');
     if (httpIndex !== -1) {
-        const potentialUrl = decoded.substring(httpIndex);
-        // Extract the external URL if found
-        if (potentialUrl.includes('://')) {
-            return potentialUrl;
+        const potentialUrl = path.substring(httpIndex);
+        // Fix potential missing slash from path flattening (https:/ vs https://)
+        if (potentialUrl.startsWith('https:/') && !potentialUrl.startsWith('https://')) {
+            return potentialUrl.replace('https:/', 'https://');
         }
+        if (potentialUrl.startsWith('http:/') && !potentialUrl.startsWith('http://')) {
+            return potentialUrl.replace('http:/', 'http://');
+        }
+        return potentialUrl;
     }
 
-    // For relative paths, prepend the base URL
+    // 3. Fallback to prepending the base URL for true relative paths
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v3").replace('/api/v3', '');
     return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
 }

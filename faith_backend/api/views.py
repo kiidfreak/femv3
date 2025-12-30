@@ -20,6 +20,12 @@ from .validators import (
     get_remaining_slots
 )
 
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all().order_by('-created_at')
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    ordering = ['-created_at']
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
